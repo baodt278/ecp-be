@@ -1,2 +1,5 @@
-package org.ecp.backend.enums;public class BillStatus {
+package org.ecp.backend.enums;
+
+public enum BillStatus {
+    PAID, UNPAID, EXPIRED
 }

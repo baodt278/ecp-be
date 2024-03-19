@@ -1,2 +1,5 @@
-package org.ecp.backend.enums;public class ContractType {
+package org.ecp.backend.enums;
+
+public enum ContractType {
+    FAMILY, BUSINESS, PRODUCE, PUBLIC_GOV, EDU_MEDIC, COMPLEX
 }
