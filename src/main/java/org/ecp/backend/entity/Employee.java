@@ -15,7 +15,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class Provider extends User {
+public class Employee extends User {
     @ManyToOne
     @JoinColumn(name = "company_id")
     private Company company;

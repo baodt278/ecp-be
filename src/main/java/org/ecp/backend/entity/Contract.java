@@ -32,5 +32,5 @@ public class Contract {
     private Company company;
     @ManyToOne()
     @JoinColumn(name = "consumer_id")
-    private Consumer consumer;
+    private Client client;
 }

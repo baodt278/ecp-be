@@ -13,7 +13,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class Consumer extends User {
+public class Client extends User {
     private String personId;
     private String personName;
     private Boolean active;
