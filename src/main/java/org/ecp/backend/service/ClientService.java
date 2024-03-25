@@ -11,7 +11,11 @@ public interface ClientService {
 
     ServerResponseDto register(RegisterRequest dto);
 
-    ServerResponseDto changePassword(PasswordRequest dto, String username);
+    ServerResponseDto changePassword(String username, PasswordRequest dto);
 
-    ServerResponseDto updateInfo(UserInfoDto dto, String username);
+    ServerResponseDto updateInfo(String username, UserInfoDto dto);
+
+    ServerResponseDto getInfo(String username);
+
+    ServerResponseDto getDetailInfo(String username);
 }

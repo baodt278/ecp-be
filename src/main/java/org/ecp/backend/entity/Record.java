@@ -3,7 +3,7 @@ package org.ecp.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 @Entity
 @Getter
@@ -15,7 +15,7 @@ public class Record {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private LocalDateTime time;
+    private Date time;
     private Double consume;
     private Double normal;
     private Double low;

@@ -16,4 +16,6 @@ public interface EmployeeService {
     ServerResponseDto create(String acronym, String creator, EmployeeRequest dto);
 
     ServerResponseDto getEmployees(String acronym);
+
+    ServerResponseDto getInfo(String username);
 }

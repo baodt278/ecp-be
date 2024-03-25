@@ -17,7 +17,6 @@ import org.ecp.backend.exception.ApplicationRuntimeException;
 import org.ecp.backend.repository.AdminRepository;
 import org.ecp.backend.repository.CompanyRepository;
 import org.ecp.backend.repository.EmployeeRepository;
-import org.ecp.backend.service.AdminService;
 import org.ecp.backend.service.EmployeeService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -106,5 +105,13 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (!companyRepo.existsByAcronym(acronym))
             throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Cong ty khong ton tai");
         return new ServerResponseDto(CommonConstant.SUCCESS, employeeRepo.findEmployees(acronym));
+    }
+
+    @Override
+    public ServerResponseDto getInfo(String username) {
+        Employee employee = employeeRepo.findByUsername(username)
+                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan"));
+        UserInfoDto infoDto = new UserInfoDto(employee.getEmail(), employee.getPhone(), employee.getAddress(), employee.getFullName(), employee.getAvatar());
+        return new ServerResponseDto(CommonConstant.SUCCESS, infoDto);
     }
 }

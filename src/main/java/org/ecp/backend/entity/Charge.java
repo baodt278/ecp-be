@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.ecp.backend.enums.ChargeType;
 
+import java.util.Date;
+
 @Entity
 @Getter
 @Setter
@@ -18,6 +20,7 @@ public class Charge {
     private Long id;
     private String contractName;
     private String requestCode;
+    private Date createdAt;
     @Enumerated(EnumType.STRING)
     private ChargeType type;
     @Column(columnDefinition = "text")

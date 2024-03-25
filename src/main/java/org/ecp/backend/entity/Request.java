@@ -5,7 +5,7 @@ import lombok.*;
 import org.ecp.backend.enums.RequestStatus;
 import org.ecp.backend.enums.RequestType;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 @Entity
 @Getter
@@ -20,7 +20,7 @@ public class Request {
     private String code;
     @Column(columnDefinition = "text")
     private String description;
-    private LocalDateTime createdAt;
+    private Date createdAt;
     @Column(columnDefinition = "text")
     private String images;
     @Enumerated(EnumType.STRING)
@@ -28,17 +28,17 @@ public class Request {
     @Enumerated(EnumType.STRING)
     private RequestStatus status;
     @Column(columnDefinition = "text")
-    private String infoContract;
+    private String info;
 
     private String reviewedBy;
     @Column(columnDefinition = "text")
     private String reviewText;
-    private LocalDateTime reviewedAt;
+    private Date reviewedAt;
 
     private String acceptedBy;
     @Column(columnDefinition = "text")
     private String acceptText;
-    private LocalDateTime acceptedAt;
+    private Date acceptedAt;
 
     @ManyToOne()
     @JoinColumn(name = "company_id")

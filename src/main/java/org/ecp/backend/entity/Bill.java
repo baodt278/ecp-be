@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.ecp.backend.enums.BillStatus;
 
-import java.time.LocalDate;
+import java.util.Date;
 
 @Entity
 @Getter
@@ -18,9 +18,9 @@ public class Bill {
     private Long id;
     private String code;
 
-    private LocalDate startDate;
-    private LocalDate endDate;
-    private LocalDate expiredDate;
+    private Date start;
+    private Date end;
+    private Date expire;
 
     private Double consume;
     private Double normal;

@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -24,7 +24,7 @@ public class News {
     private String title;
     @Column(columnDefinition = "text")
     private String content;
-    private LocalDateTime time;
+    private Date time;
     @Column(columnDefinition = "text")
     private String images;
 }

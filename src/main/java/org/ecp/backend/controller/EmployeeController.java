@@ -16,9 +16,14 @@ public class EmployeeController {
     private final EmployeeService employeeService;
     private final CompanyService companyService;
 
-    @GetMapping("/")
+    @GetMapping("")
     public ServerResponseDto getAllEmployees(@RequestParam("acronym") String acronym) {
         return employeeService.getEmployees(acronym);
+    }
+
+    @GetMapping("/{username}")
+    public ServerResponseDto getInfo(@PathVariable String username) {
+        return employeeService.getInfo(username);
     }
 
     @GetMapping("/company")

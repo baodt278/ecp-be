@@ -1,6 +1,14 @@
 server:
     port: 8080
 
+minio:
+    bucket:
+        name: ecp-image
+    access:
+        key: NMPEZF83o7L6VzMHknZa
+        secret: 3Yez28TklgwEcPi6zg1Jte3swNfSePyLseQcCQI6
+    url: http://127.0.0.1:9001
+
 spring:
     application:
         name: ecp

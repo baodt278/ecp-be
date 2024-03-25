@@ -7,6 +7,7 @@ import org.ecp.backend.dto.request.PasswordRequest;
 import org.ecp.backend.dto.request.LoginRequest;
 import org.ecp.backend.dto.request.RegisterRequest;
 import org.ecp.backend.dto.UserInfoDto;
+import org.ecp.backend.dto.DetailDto;
 import org.ecp.backend.dto.response.ResponseDto;
 import org.ecp.backend.dto.response.ServerResponseDto;
 import org.ecp.backend.entity.Client;
@@ -53,7 +54,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public ServerResponseDto changePassword(PasswordRequest dto, String username) {
+    public ServerResponseDto changePassword(String username, PasswordRequest dto) {
         Client client = clientRepo.findByUsername(username)
                 .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan"));
         if (!encoder.matches(dto.getOldPassword(), client.getPassword()))
@@ -64,7 +65,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public ServerResponseDto updateInfo(UserInfoDto dto, String username) {
+    public ServerResponseDto updateInfo(String username, UserInfoDto dto) {
         Client client = clientRepo.findByUsername(username)
                 .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan"));
         String email = dto.getEmail();
@@ -78,4 +79,25 @@ public class ClientServiceImpl implements ClientService {
         clientRepo.save(client);
         return new ServerResponseDto(CommonConstant.SUCCESS, "Thay doi thong tin thanh cong");
     }
+
+    @Override
+    public ServerResponseDto getInfo(String username) {
+        Client client = clientRepo.findByUsername(username)
+                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan"));
+        UserInfoDto infoDto = new UserInfoDto(client.getEmail(), client.getPhone(), client.getAddress(), client.getFullName(), client.getAvatar());
+        return new ServerResponseDto(CommonConstant.SUCCESS, infoDto);
+    }
+
+    @Override
+    public ServerResponseDto getDetailInfo(String username){
+        Client client = clientRepo.findByUsername(username)
+                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan"));
+        DetailDto dto = new DetailDto(client.getPersonId(), client.getPersonName(), client.getDateOfBirth(), client.getActive());
+        return new ServerResponseDto(CommonConstant.SUCCESS, dto);
+    }
+    
+//    public ServerResponseDto verifyClient(String username, boolean decision, DetailDto dto){
+//        Client client = clientRepo.findByUsername(username)
+//                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan"));
+//    }
 }
