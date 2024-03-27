@@ -8,6 +8,7 @@ import org.ecp.backend.service.AdminService;
 import org.ecp.backend.service.ClientService;
 import org.ecp.backend.service.EmployeeService;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,27 +21,27 @@ public class UserController {
     private final EmployeeService employeeService;
 
     @PostMapping("/admin-login")
-    public ServerResponseDto loginAdmin(LoginRequest dto) {
+    public ServerResponseDto loginAdmin(@RequestBody LoginRequest dto) {
         return adminService.login(dto);
     }
 
     @PostMapping("/admin-create")
-    public ServerResponseDto createAdmin(RegisterRequest dto) {
+    public ServerResponseDto createAdmin(@RequestBody RegisterRequest dto) {
         return adminService.create(dto);
     }
 
     @PostMapping("/client-login")
-    public ServerResponseDto loginClient(LoginRequest dto) {
+    public ServerResponseDto loginClient(@RequestBody LoginRequest dto) {
         return clientService.login(dto);
     }
 
     @PostMapping("/client-register")
-    public ServerResponseDto registerClient(RegisterRequest dto) {
+    public ServerResponseDto registerClient(@RequestBody RegisterRequest dto) {
         return clientService.register(dto);
     }
 
     @PostMapping("/employee-login")
-    public ServerResponseDto loginEmployee(LoginRequest dto) {
+    public ServerResponseDto loginEmployee(@RequestBody LoginRequest dto) {
         return employeeService.login(dto);
     }
 }

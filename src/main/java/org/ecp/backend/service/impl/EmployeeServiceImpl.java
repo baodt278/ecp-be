@@ -7,6 +7,7 @@ import org.ecp.backend.dto.request.PasswordRequest;
 import org.ecp.backend.dto.request.LoginRequest;
 import org.ecp.backend.dto.request.EmployeeRequest;
 import org.ecp.backend.dto.UserInfoDto;
+import org.ecp.backend.dto.response.EmployeeResponse;
 import org.ecp.backend.dto.response.ResponseDto;
 import org.ecp.backend.dto.response.ServerResponseDto;
 import org.ecp.backend.entity.Admin;
@@ -36,7 +37,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (!encoder.matches(dto.getPassword(), employee.getPassword())) {
             throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Sai tai khoan hoac mat khau");
         }
-        ResponseDto responseDto = new ResponseDto(employee.getUsername(), employee.getRole());
+        EmployeeResponse responseDto = new EmployeeResponse(employee.getUsername(), employee.getCompany().getAcronym(), employee.getRole());
         return new ServerResponseDto(CommonConstant.SUCCESS, responseDto);
     }
 
@@ -91,7 +92,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         return new ServerResponseDto(CommonConstant.SUCCESS, "Tao tai khoan thanh cong");
     }
 
-    private void checkPermitRole(String username){
+    private void checkPermitRole(String username) {
         Admin admin = adminRepo.findByUsername(username).orElse(null);
         Employee employee = employeeRepo.findByUsername(username).orElse(null);
         if (admin == null && employee == null)

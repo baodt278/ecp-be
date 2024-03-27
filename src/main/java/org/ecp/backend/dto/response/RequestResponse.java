@@ -1,22 +1,22 @@
 package org.ecp.backend.dto.response;
 
-import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.ecp.backend.entity.Client;
-import org.ecp.backend.entity.Company;
 import org.ecp.backend.enums.RequestStatus;
 import org.ecp.backend.enums.RequestType;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
-@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class RequestResponse {
     private String code;
     private String description;
     private Date createdAt;
-    private String imageUrls;
+    private List<String> imageUrls;
     private RequestType type;
     private RequestStatus status;
     private String info;

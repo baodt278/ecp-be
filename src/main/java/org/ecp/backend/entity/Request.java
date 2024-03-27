@@ -4,8 +4,11 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.ecp.backend.enums.RequestStatus;
 import org.ecp.backend.enums.RequestType;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Getter
@@ -21,8 +24,10 @@ public class Request {
     @Column(columnDefinition = "text")
     private String description;
     private Date createdAt;
-    @Column(columnDefinition = "text")
-    private String images;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    private List<String> images;
+
     @Enumerated(EnumType.STRING)
     private RequestType type;
     @Enumerated(EnumType.STRING)

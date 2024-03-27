@@ -95,9 +95,4 @@ public class ClientServiceImpl implements ClientService {
         DetailDto dto = new DetailDto(client.getPersonId(), client.getPersonName(), client.getDateOfBirth(), client.getActive());
         return new ServerResponseDto(CommonConstant.SUCCESS, dto);
     }
-    
-//    public ServerResponseDto verifyClient(String username, boolean decision, DetailDto dto){
-//        Client client = clientRepo.findByUsername(username)
-//                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan"));
-//    }
 }

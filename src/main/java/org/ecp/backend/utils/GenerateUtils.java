@@ -8,7 +8,7 @@ public class GenerateUtils {
     }
 
     public static String generatedCode() {
-        return RandomStringUtils.random(8, true, true);
+        return RandomStringUtils.random(10, true, true);
     }
 
     public static String generateAcronym(String acronym) {

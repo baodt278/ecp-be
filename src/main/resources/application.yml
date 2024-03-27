@@ -7,14 +7,16 @@ minio:
     access:
         key: NMPEZF83o7L6VzMHknZa
         secret: 3Yez28TklgwEcPi6zg1Jte3swNfSePyLseQcCQI6
-    url: http://127.0.0.1:9001
+    url: http://127.0.0.1:9000
+
+id_extract_url: http://127.0.0.1:8082/uploader
 
 spring:
     application:
         name: ecp
     datasource:
         driver-class-name: org.mariadb.jdbc.Driver
-        url: jdbc:mariadb://localhost:3307/ecp
+        url: jdbc:mariadb://127.0.0.1:3307/ecp
         username: root
         password: 123456
     jpa:

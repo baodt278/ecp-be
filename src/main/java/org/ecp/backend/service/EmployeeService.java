@@ -13,7 +13,7 @@ public interface EmployeeService {
 
     ServerResponseDto updateInfo(String username, UserInfoDto dto);
 
-    ServerResponseDto create(String acronym, String creator, EmployeeRequest dto);
+    ServerResponseDto create(String acronym, String username, EmployeeRequest dto);
 
     ServerResponseDto getEmployees(String acronym);
 
