@@ -1,7 +1,6 @@
 package org.ecp.backend.repository;
 
-import org.ecp.backend.dto.response.CompanyResponse;
-import org.ecp.backend.dto.response.ResponseDto;
+import org.ecp.backend.dto.CompanyDto;
 import org.ecp.backend.entity.Company;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,10 +15,10 @@ public interface CompanyRepository extends JpaRepository<Company, Long> {
 
     Optional<Company> findByAcronym(String acronym);
 
-    @Query("SELECT new org.ecp.backend.dto.response.CompanyResponse(c.name, c.acronym, c.address) FROM Company c")
-    List<CompanyResponse> findCompanies();
+    @Query("SELECT new org.ecp.backend.dto.CompanyDto(c.name, c.acronym, c.address) FROM Company c")
+    List<CompanyDto> findCompanies();
 
-    @Query("SELECT new org.ecp.backend.dto.response.CompanyResponse(c.name, c.acronym, c.address) FROM Company c " +
+    @Query("SELECT new org.ecp.backend.dto.CompanyDto(c.name, c.acronym, c.address) FROM Company c " +
             "WHERE c.acronym = :acronym")
-    Optional<CompanyResponse> findCompanyByAcronym(String acronym);
+    Optional<CompanyDto> findCompanyByAcronym(String acronym);
 }

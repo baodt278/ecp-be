@@ -5,7 +5,7 @@ import org.ecp.backend.dto.UserInfoDto;
 import org.ecp.backend.dto.request.ActionDto;
 import org.ecp.backend.dto.request.EmployeeRequest;
 import org.ecp.backend.dto.request.PasswordRequest;
-import org.ecp.backend.dto.response.CompanyResponse;
+import org.ecp.backend.dto.CompanyDto;
 import org.ecp.backend.dto.response.ServerResponseDto;
 import org.ecp.backend.service.AdminService;
 import org.ecp.backend.service.CompanyService;
@@ -22,45 +22,51 @@ public class AdminController {
     private final CompanyService companyService;
     private final RequestService requestService;
 
-    @GetMapping("/{username}")
-    public ServerResponseDto getInfo(@PathVariable String username) {
+    @GetMapping("")
+    public ServerResponseDto getInfo(@RequestParam String username) {
         return adminService.getInfo(username);
     }
 
-    @PostMapping("/{username}/update-info")
-    public ServerResponseDto updateInfo(@PathVariable String username, @RequestBody UserInfoDto dto) {
+    @PostMapping("/update-info")
+    public ServerResponseDto updateInfo(@RequestParam String username, @RequestBody UserInfoDto dto) {
         return adminService.updateInfo(username, dto);
     }
 
-    @PostMapping("/{username}/change-password")
-    public ServerResponseDto changePassword(@PathVariable String username, @RequestBody PasswordRequest dto) {
+    @PostMapping("/change-password")
+    public ServerResponseDto changePassword(@RequestParam String username,
+                                            @RequestBody PasswordRequest dto) {
         return adminService.changePassword(username, dto);
     }
 
-    @GetMapping("/companies")
+    @GetMapping("/company")
     public ServerResponseDto getAllCompanies() {
         return companyService.getCompanies();
     }
 
     @PostMapping("/create-company")
-    public ServerResponseDto createCompany(CompanyResponse dto) {
+    public ServerResponseDto createCompany(@RequestBody CompanyDto dto) {
         return companyService.create(dto);
     }
 
-    @GetMapping("/companies/{acronym}/employees")
-    public ServerResponseDto getAllEmployees(@PathVariable String acronym) {
+    @GetMapping("/employees")
+    public ServerResponseDto getAllEmployees(@RequestParam String acronym) {
         return employeeService.getEmployees(acronym);
     }
 
-    @PostMapping("/{username}/companies/{acronym}/create-employee")
-    public ServerResponseDto createEmployee(@PathVariable String acronym,
-                                            @PathVariable("username") String username,
+    @PostMapping("/create-employee")
+    public ServerResponseDto createEmployee(@RequestParam String acronym,
+                                            @RequestParam String username,
                                             @RequestBody EmployeeRequest dto) {
         return employeeService.create(acronym, username, dto);
     }
 
-    @PostMapping("/{username}/client/verify-account")
-    public ServerResponseDto verifyClient(@PathVariable String username,
+    @GetMapping("/requests")
+    public ServerResponseDto getRequests() {
+        return requestService.getRequestsForAdmin();
+    }
+
+    @PostMapping("/verify-account")
+    public ServerResponseDto verifyClient(@RequestParam String username,
                                           @RequestBody ActionDto dto) {
         return requestService.verify(username, dto);
     }

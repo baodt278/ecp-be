@@ -8,9 +8,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface RequestService {
 
-    ServerResponseDto requestVerify(String username, MultipartFile file);
+    ServerResponseDto getRequestsForStaff(String acronym);
 
-    ServerResponseDto getRequestVerify();
+    ServerResponseDto getRequestsForManager(String acronym);
+
+    ServerResponseDto getRequestsForClient(String username);
+
+    ServerResponseDto verifyClient(String username, MultipartFile file);
+
+    ServerResponseDto getRequestsForAdmin();
 
     ServerResponseDto verify(String username, ActionDto dto);
 

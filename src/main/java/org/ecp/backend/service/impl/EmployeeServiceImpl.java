@@ -8,7 +8,6 @@ import org.ecp.backend.dto.request.LoginRequest;
 import org.ecp.backend.dto.request.EmployeeRequest;
 import org.ecp.backend.dto.UserInfoDto;
 import org.ecp.backend.dto.response.EmployeeResponse;
-import org.ecp.backend.dto.response.ResponseDto;
 import org.ecp.backend.dto.response.ServerResponseDto;
 import org.ecp.backend.entity.Admin;
 import org.ecp.backend.entity.Company;

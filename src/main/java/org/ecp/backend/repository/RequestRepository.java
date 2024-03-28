@@ -12,8 +12,13 @@ import java.util.Optional;
 
 @Repository
 public interface RequestRepository extends JpaRepository<Request, Long> {
-    @Query("SELECT r FROM Request r WHERE r.company.acronym = :acronym AND r.type IN (:types) AND r.status = :status")
-    List<Request> findRequestsBy(String acronym, List<RequestType> types, RequestStatus status);
+    @Query("SELECT r FROM Request r WHERE r.type = :type AND r.status = :status")
+    List<Request> findRequestsBy(RequestType type, RequestStatus status);
+
+    @Query("SELECT r FROM Request r WHERE r.company.acronym = :acronym AND r.type NOT IN (:types) AND r.status = :status")
+    List<Request> findRequestsCompany(String acronym, List<RequestType> types, RequestStatus status);
+
+    List<Request> findRequestsByClient_Username(String username);
 
     Optional<Request> findRequestByCode(String code);
 }

@@ -1,11 +1,9 @@
 package org.ecp.backend.exception;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
-@EqualsAndHashCode(callSuper = true)
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 public class ApplicationRuntimeException extends RuntimeException {
     private final int code;

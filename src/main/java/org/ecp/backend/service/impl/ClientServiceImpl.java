@@ -8,7 +8,7 @@ import org.ecp.backend.dto.request.LoginRequest;
 import org.ecp.backend.dto.request.RegisterRequest;
 import org.ecp.backend.dto.UserInfoDto;
 import org.ecp.backend.dto.DetailDto;
-import org.ecp.backend.dto.response.ResponseDto;
+import org.ecp.backend.dto.response.ClientResponse;
 import org.ecp.backend.dto.response.ServerResponseDto;
 import org.ecp.backend.entity.Client;
 import org.ecp.backend.enums.Role;
@@ -30,8 +30,8 @@ public class ClientServiceImpl implements ClientService {
                 .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Tai khoan khong ton tai"));
         if (!encoder.matches(dto.getPassword(), client.getPassword()))
             throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Sai tai khoan hoac mat khau");
-        ResponseDto responseDto = new ResponseDto(client.getUsername(), client.getRole());
-        return new ServerResponseDto(CommonConstant.SUCCESS, responseDto);
+        ClientResponse response = new ClientResponse(client.getUsername(), client.getRole(), client.getActive());
+        return new ServerResponseDto(CommonConstant.SUCCESS, response);
     }
 
     @Override

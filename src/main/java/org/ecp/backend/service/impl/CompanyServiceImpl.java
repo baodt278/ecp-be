@@ -2,7 +2,7 @@ package org.ecp.backend.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.ecp.backend.Constant.CommonConstant;
-import org.ecp.backend.dto.response.CompanyResponse;
+import org.ecp.backend.dto.CompanyDto;
 import org.ecp.backend.dto.response.ServerResponseDto;
 import org.ecp.backend.entity.Company;
 import org.ecp.backend.exception.ApplicationRuntimeException;
@@ -17,7 +17,7 @@ public class CompanyServiceImpl implements CompanyService {
     private final CompanyRepository companyRepo;
 
     @Override
-    public ServerResponseDto create(CompanyResponse dto) {
+    public ServerResponseDto create(CompanyDto dto) {
         String acronym = GenerateUtils.generateAcronym(dto.getAcronym());
         if (companyRepo.existsByAcronym(acronym))
             throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Cong ty da ton tai");

@@ -10,9 +10,9 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class RequestDto {
+    private RequestType type;
     private String description;
     private List<MultipartFile> images;
-    private RequestType type;
     private String info;
     private String acronymCompany;
 }

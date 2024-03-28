@@ -19,9 +19,7 @@ import org.ecp.backend.utils.DateUtils;
 import org.ecp.backend.utils.GenerateUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -52,7 +50,37 @@ public class RequestServiceImpl implements RequestService {
     private String url;
 
     @Override
-    public ServerResponseDto requestVerify(String username, MultipartFile file) {
+    public ServerResponseDto getRequestsForAdmin() {
+        List<Request> requests = requestRepo.findRequestsBy(RequestType.CLIENT_VERIFY, RequestStatus.PENDING);
+        List<RequestResponse> responses = requests.stream().map(this::getRequestResponse).toList();
+        return new ServerResponseDto(CommonConstant.SUCCESS, responses);
+    }
+
+    @Override
+    public ServerResponseDto getRequestsForStaff(String acronym) {
+        List<RequestType> types = List.of(RequestType.CLIENT_VERIFY, RequestType.EMERGENCY);
+        List<Request> requests = requestRepo.findRequestsCompany(acronym, types, RequestStatus.PENDING);
+        List<RequestResponse> responses = requests.stream().map(this::getRequestResponse).toList();
+        return new ServerResponseDto(CommonConstant.SUCCESS, responses);
+    }
+
+    @Override
+    public ServerResponseDto getRequestsForManager(String acronym) {
+        List<RequestType> types = List.of(RequestType.ADVICE, RequestType.QUESTION, RequestType.CLIENT_VERIFY);
+        List<Request> requests = requestRepo.findRequestsCompany(acronym, types, RequestStatus.REVIEWED);
+        List<RequestResponse> responses = requests.stream().map(this::getRequestResponse).toList();
+        return new ServerResponseDto(CommonConstant.SUCCESS, responses);
+    }
+
+    @Override
+    public ServerResponseDto getRequestsForClient(String username) {
+        List<Request> requests = requestRepo.findRequestsByClient_Username(username);
+        List<RequestResponse> responses = requests.stream().map(this::getRequestResponse).toList();
+        return new ServerResponseDto(CommonConstant.SUCCESS, responses);
+    }
+
+    @Override
+    public ServerResponseDto verifyClient(String username, MultipartFile file) {
         try {
             Client client = clientRepo.findByUsername(username)
                     .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan"));
@@ -74,14 +102,6 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
-    public ServerResponseDto getRequestVerify() {
-        List<RequestType> types = Collections.singletonList(RequestType.CLIENT_VERIFY);
-        List<Request> requests = requestRepo.findRequestsBy(null, types, RequestStatus.PENDING);
-        List<RequestResponse> responses = requests.stream().map(this::getRequestResponse).toList();
-        return new ServerResponseDto(CommonConstant.SUCCESS, responses);
-    }
-
-    @Override
     public ServerResponseDto verify(String username, ActionDto dto) {
         if (!adminRepo.existsByUsername(username))
             throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan");
@@ -96,18 +116,6 @@ public class RequestServiceImpl implements RequestService {
         return new ServerResponseDto(CommonConstant.SUCCESS, "Da thuc hien xac minh tai khoan");
     }
 
-    private void updateInfoClient(Request request) {
-        //["id","name","date",....]
-        if (request.getStatus() != RequestStatus.APPROVED) return;
-        String[] data = convertJsonToArray(request.getInfo());
-        Client client = request.getClient();
-        client.setActive(true);
-        client.setPersonId(data[0]); // ID
-        client.setPersonName(data[1]); // Full name
-        client.setDateOfBirth(DateUtils.convertStringToDate(data[2], "dd/MM/yyyy")); // Date of birth
-        clientRepo.save(client);
-    }
-
     @Override
     public ServerResponseDto create(String username, RequestDto dto) {
         try {
@@ -119,14 +127,12 @@ public class RequestServiceImpl implements RequestService {
                     .code(GenerateUtils.generatedCode())
                     .description(dto.getDescription())
                     .createdAt(new Date())
-                    .images(dto.getImages().stream()
-                            .map(minioService::uploadFile)
-                            .toList())
+                    .images(dto.getImages() == null ? null : dto.getImages().stream().map(minioService::uploadFile).toList())
                     .type(dto.getType())
-                    .status(RequestStatus.PENDING)
+                    .status(dto.getType() != RequestType.EMERGENCY ? RequestStatus.PENDING : RequestStatus.REVIEWED)
                     .info(dto.getInfo())
-                    .client(client)
                     .company(company)
+                    .client(client)
                     .build();
             requestRepo.save(request);
             return new ServerResponseDto(CommonConstant.SUCCESS, "Da gui yeu cau");
@@ -166,22 +172,33 @@ public class RequestServiceImpl implements RequestService {
         return new ServerResponseDto(CommonConstant.SUCCESS, "Da xac minh yeu cau");
     }
 
+    private void updateInfoClient(Request request) {
+        //["id","name","date",....]
+        if (request.getStatus() != RequestStatus.APPROVED) return;
+        String[] data = convertJsonToArray(request.getInfo());
+        Client client = request.getClient();
+        client.setActive(true);
+        client.setPersonId(data[0]); // ID
+        client.setPersonName(data[1]); // Full name
+        client.setDateOfBirth(DateUtils.convertStringToDate(data[2], "dd/MM/yyyy")); // Date of birth
+        clientRepo.save(client);
+    }
+
     private void effectByRequest(Request request, List<ChargeDto> dtos) {
-        // ["name","address","houses","type","status","volt"]
+        // "name","address","houses","type","status","volt"
         if (request.getStatus() != RequestStatus.APPROVED) return;
         RequestType type = request.getType();
         Company company = request.getCompany();
         Client client = request.getClient();
-        String[] data = convertJsonToArray(request.getInfo());
-
-        if (type.toString().contains("CONTRACT_"))
-            createOrUpdateContract(type, company, client, data);
-        if (!dtos.isEmpty())
-            // TO-DO add contractName to Request
-            createCharges(dtos, null, request.getCode(), company);
+        String[] data = request.getInfo().split(",");
+        if (type.toString().contains("CONTRACT_")) {
+            String contractName = createOrUpdateContract(type, company, client, data);
+            createCharges(dtos, contractName, request.getCode(), company);
+        }
     }
 
-    private void createOrUpdateContract(RequestType type, Company company, Client client, String[] data) {
+    private String createOrUpdateContract(RequestType type, Company company, Client client, String[] data) {
+        String contractName;
         switch (type) {
             case CONTRACT_NEW -> {
                 Contract contract = Contract.builder()
@@ -195,6 +212,7 @@ public class RequestServiceImpl implements RequestService {
                         .client(client)
                         .build();
                 contractRepo.save(contract);
+                contractName = contract.getName();
             }
             case CONTRACT_CHANGE -> {
                 Contract contract = contractRepo.findByName(data[0])
@@ -204,17 +222,20 @@ public class RequestServiceImpl implements RequestService {
                 contract.setType(!StringUtils.isEmpty(data[3]) ? ContractType.valueOf(data[3]) : contract.getType());
                 contract.setVolt(!StringUtils.isEmpty(data[5]) ? Volt.valueOf(data[5]) : contract.getVolt());
                 contractRepo.save(contract);
+                contractName = contract.getName();
             }
             case CONTRACT_STATUS -> {
                 Contract contract = contractRepo.findByName(data[0])
                         .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong ton tai hop dong nay"));
                 contract.setStatus(!StringUtils.isEmpty(data[4]) ? ContractStatus.valueOf(data[4]) : contract.getStatus());
                 contractRepo.save(contract);
+                contractName = contract.getName();
             }
             default -> {
-                // Do nothing
+                contractName = null;
             }
         }
+        return contractName;
     }
 
     private void createCharges(List<ChargeDto> dtos, String contractName, String requestCode, Company company) {
@@ -223,6 +244,7 @@ public class RequestServiceImpl implements RequestService {
             Charge charge = Charge.builder()
                     .contractName(contractName)
                     .requestCode(requestCode)
+                    .createdAt(new Date())
                     .type(dto.getType())
                     .reason(dto.getReason())
                     .value(dto.getValue())
@@ -235,9 +257,10 @@ public class RequestServiceImpl implements RequestService {
 
 
     private RequestResponse getRequestResponse(Request request) {
-        List<String> imageUrls = request.getImages().stream()
-                .map(minioService::getUrl)
-                .toList();
+        List<String> imageUrls = request.getImages() == null ? null :
+                request.getImages().stream()
+                        .map(minioService::getUrl)
+                        .toList();
         return RequestResponse.builder()
                 .code(request.getCode())
                 .description(request.getDescription())
@@ -252,7 +275,7 @@ public class RequestServiceImpl implements RequestService {
                 .acceptedBy(request.getAcceptedBy())
                 .acceptedAt(request.getAcceptedAt())
                 .acceptText(request.getAcceptText())
-                .companyAcronym(request.getCompany().getAcronym())
+                .companyAcronym(request.getCompany() != null ? request.getCompany().getAcronym() : null)
                 .usernameClient(request.getClient().getUsername())
                 .build();
     }
@@ -264,8 +287,9 @@ public class RequestServiceImpl implements RequestService {
         body.add("file", new FileSystemResource(convert(file)));
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
         RestTemplate restTemplate = new RestTemplate();
-        String response = restTemplate.postForEntity(url, requestEntity, String.class).getBody();
-        return response.substring(response.indexOf("["), response.lastIndexOf("]") + 1);
+        ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
+        String responseData = response.getBody();
+        return responseData.substring(responseData.indexOf("["), responseData.lastIndexOf("]") + 1);
     }
 
     private File convert(MultipartFile file) throws IOException {
