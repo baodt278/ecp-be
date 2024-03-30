@@ -2,7 +2,7 @@ package org.ecp.backend.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.ecp.backend.Constant.CommonConstant;
+import org.ecp.backend.constant.CommonConstant;
 import org.ecp.backend.dto.request.PasswordRequest;
 import org.ecp.backend.dto.request.LoginRequest;
 import org.ecp.backend.dto.request.RegisterRequest;

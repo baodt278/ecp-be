@@ -22,5 +22,5 @@ public class Price {
     private Volt volt;
     @Enumerated(EnumType.STRING)
     private PriceTag tag;
-    private Double price;
+    private double price;
 }

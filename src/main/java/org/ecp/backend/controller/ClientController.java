@@ -5,8 +5,7 @@ import org.ecp.backend.dto.UserInfoDto;
 import org.ecp.backend.dto.request.PasswordRequest;
 import org.ecp.backend.dto.request.RequestDto;
 import org.ecp.backend.dto.response.ServerResponseDto;
-import org.ecp.backend.service.ClientService;
-import org.ecp.backend.service.RequestService;
+import org.ecp.backend.service.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,6 +15,9 @@ import org.springframework.web.multipart.MultipartFile;
 public class ClientController {
     private final ClientService clientService;
     private final RequestService requestService;
+    private final ContractService contractService;
+    private final RecordService recordService;
+    private final BillService billService;
 
     @PostMapping("/update-info")
     public ServerResponseDto updateInfo(@RequestParam String username,
@@ -32,7 +34,7 @@ public class ClientController {
     @PostMapping("/verify-account")
     public ServerResponseDto verifyAccount(@RequestParam String username,
                                            @RequestParam MultipartFile file) {
-        return requestService.verifyClient(username, file);
+        return requestService.requestVerify(username, file);
     }
 
     @GetMapping("/requests")
@@ -43,6 +45,36 @@ public class ClientController {
     @PostMapping("/create-request")
     public ServerResponseDto createRequest(@RequestParam String username,
                                            @RequestBody RequestDto dto) {
-        return requestService.create(username, dto);
+        return requestService.createRequest(username, dto);
+    }
+
+    @GetMapping("/contracts")
+    public ServerResponseDto getContracts(@RequestParam String username){
+        return contractService.getContractClientOwner(username);
+    }
+
+    @GetMapping("/records/7days-before")
+    public ServerResponseDto getRecords7DaysBefore(@RequestParam String acronym){
+        return recordService.findConsumeTime7DaysBefore(acronym);
+    }
+
+    @GetMapping("/records/6months-before")
+    public ServerResponseDto getTotals6MonthsBefore(@RequestParam String acronym){
+        return recordService.findConsume6MonthsBefore(acronym);
+    }
+
+    @GetMapping("/records/current-month")
+    public ServerResponseDto getRecordsCurrentMonth(@RequestParam String acronym){
+        return recordService.findRecordsCurrentMonth(acronym);
+    }
+
+    @GetMapping("/records/predict-current")
+    public ServerResponseDto getPredictCurrentMonth(@RequestParam String acronym){
+        return recordService.predictValueCurrentMonth(acronym);
+    }
+
+    @GetMapping("/bills")
+    public ServerResponseDto getBillsContract(@RequestParam String contractName){
+        return billService.getBillsContract(contractName);
     }
 }

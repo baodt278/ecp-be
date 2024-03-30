@@ -2,7 +2,7 @@ package org.ecp.backend.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.ecp.backend.Constant.CommonConstant;
+import org.ecp.backend.constant.CommonConstant;
 import org.ecp.backend.dto.request.AcceptRequest;
 import org.ecp.backend.dto.request.ActionDto;
 import org.ecp.backend.dto.request.ChargeDto;
@@ -80,7 +80,7 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
-    public ServerResponseDto verifyClient(String username, MultipartFile file) {
+    public ServerResponseDto requestVerify(String username, MultipartFile file) {
         try {
             Client client = clientRepo.findByUsername(username)
                     .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan"));
@@ -102,7 +102,7 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
-    public ServerResponseDto verify(String username, ActionDto dto) {
+    public ServerResponseDto verifyRequest(String username, ActionDto dto) {
         if (!adminRepo.existsByUsername(username))
             throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan");
         Request request = requestRepo.findRequestByCode(dto.getCode())
@@ -117,7 +117,7 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
-    public ServerResponseDto create(String username, RequestDto dto) {
+    public ServerResponseDto createRequest(String username, RequestDto dto) {
         try {
             Client client = clientRepo.findByUsername(username)
                     .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan"));
@@ -142,7 +142,7 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
-    public ServerResponseDto review(String username, ActionDto dto) {
+    public ServerResponseDto reviewRequest(String username, ActionDto dto) {
         if (!employeeRepo.existsByUsername(username))
             throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan");
         Request request = requestRepo.findRequestByCode(dto.getCode())
@@ -156,7 +156,7 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
-    public ServerResponseDto accept(String username, AcceptRequest dto) {
+    public ServerResponseDto acceptRequest(String username, AcceptRequest dto) {
         ActionDto action = dto.getAction();
         List<ChargeDto> charges = dto.getCharges();
         if (!employeeRepo.existsByUsername(username))
@@ -219,6 +219,7 @@ public class RequestServiceImpl implements RequestService {
                         .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong ton tai hop dong nay"));
                 contract.setAddress(StringUtils.defaultIfEmpty(data[1], contract.getAddress()));
                 contract.setHouses(!StringUtils.isEmpty(data[2]) ? Integer.valueOf(data[2]) : contract.getHouses());
+                contract.setCreatedAt(new Date());
                 contract.setType(!StringUtils.isEmpty(data[3]) ? ContractType.valueOf(data[3]) : contract.getType());
                 contract.setVolt(!StringUtils.isEmpty(data[5]) ? Volt.valueOf(data[5]) : contract.getVolt());
                 contractRepo.save(contract);

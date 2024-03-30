@@ -68,6 +68,6 @@ public class AdminController {
     @PostMapping("/verify-account")
     public ServerResponseDto verifyClient(@RequestParam String username,
                                           @RequestBody ActionDto dto) {
-        return requestService.verify(username, dto);
+        return requestService.verifyRequest(username, dto);
     }
 }

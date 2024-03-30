@@ -23,7 +23,7 @@ public class Charge {
     private ChargeType type;
     @Column(columnDefinition = "text")
     private String reason;
-    private Double value;
+    private double value;
     @ManyToOne()
     @JoinColumn(name = "company_id")
     private Company company;

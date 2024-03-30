@@ -16,10 +16,10 @@ public class Record {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Date time;
-    private Double consume;
-    private Double normal;
-    private Double low;
-    private Double high;
+    private double consume;
+    private double normal;
+    private double low;
+    private double high;
     @ManyToOne()
     @JoinColumn(name = "contract_id")
     private Contract contract;

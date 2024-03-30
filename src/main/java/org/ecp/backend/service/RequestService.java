@@ -14,15 +14,15 @@ public interface RequestService {
 
     ServerResponseDto getRequestsForClient(String username);
 
-    ServerResponseDto verifyClient(String username, MultipartFile file);
+    ServerResponseDto requestVerify(String username, MultipartFile file);
 
     ServerResponseDto getRequestsForAdmin();
 
-    ServerResponseDto verify(String username, ActionDto dto);
+    ServerResponseDto verifyRequest(String username, ActionDto dto);
 
-    ServerResponseDto create(String username, RequestDto dto);
+    ServerResponseDto createRequest(String username, RequestDto dto);
 
-    ServerResponseDto review(String username, ActionDto dto);
+    ServerResponseDto reviewRequest(String username, ActionDto dto);
 
-    ServerResponseDto accept(String username, AcceptRequest dto);
+    ServerResponseDto acceptRequest(String username, AcceptRequest dto);
 }

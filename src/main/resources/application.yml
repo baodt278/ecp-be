@@ -10,6 +10,7 @@ minio:
     url: http://127.0.0.1:9000
 
 id_extract_url: http://127.0.0.1:8082/uploader
+file_path: C:/record/
 
 spring:
     application:

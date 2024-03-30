@@ -1,21 +1,20 @@
-package org.ecp.backend.entity;
+package org.ecp.backend.dto;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.ecp.backend.entity.Contract;
 import org.ecp.backend.enums.BillStatus;
 
 import java.util.Date;
 
-@Entity
-@Getter
-@Setter
-@NoArgsConstructor
+@Data
 @AllArgsConstructor
-@Builder
-public class Bill {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class BillDto {
     private String code;
     private Date createdAt;
 
@@ -33,9 +32,6 @@ public class Bill {
     private double charge;
     private double total;
 
-    @Enumerated(EnumType.STRING)
     private BillStatus status;
-    @ManyToOne()
-    @JoinColumn(name = "contract_id")
-    private Contract contract;
+    private String contractName;
 }

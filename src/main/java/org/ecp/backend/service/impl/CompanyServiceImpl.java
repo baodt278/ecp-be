@@ -1,7 +1,7 @@
 package org.ecp.backend.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.ecp.backend.Constant.CommonConstant;
+import org.ecp.backend.constant.CommonConstant;
 import org.ecp.backend.dto.CompanyDto;
 import org.ecp.backend.dto.response.ServerResponseDto;
 import org.ecp.backend.entity.Company;

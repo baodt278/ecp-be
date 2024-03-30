@@ -6,6 +6,8 @@ import org.ecp.backend.enums.ContractStatus;
 import org.ecp.backend.enums.ContractType;
 import org.ecp.backend.enums.Volt;
 
+import java.util.Date;
+
 @Entity
 @Getter
 @Setter
@@ -18,7 +20,8 @@ public class Contract {
     private Long id;
     private String name;
     private String address;
-    private Integer houses;
+    private int houses;
+    private Date createdAt;
 
     @Enumerated(EnumType.STRING)
     private ContractType type;

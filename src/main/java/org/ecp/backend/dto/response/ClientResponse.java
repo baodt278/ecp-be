@@ -8,5 +8,5 @@ import org.ecp.backend.enums.Role;
 public class ClientResponse {
     private String username;
     private Role role;
-    private boolean active;
+    private Boolean active;
 }
