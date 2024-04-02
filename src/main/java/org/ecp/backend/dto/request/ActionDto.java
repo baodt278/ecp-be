@@ -9,5 +9,5 @@ import org.ecp.backend.enums.RequestStatus;
 public class ActionDto {
     private String code;
     private String text;
-    private RequestStatus status;
+    private String status;
 }

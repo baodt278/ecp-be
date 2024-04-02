@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@CrossOrigin(origins = { "*" })
 @RequestMapping("/api/admin")
 public class AdminController {
     private final AdminService adminService;
@@ -38,7 +39,7 @@ public class AdminController {
         return adminService.changePassword(username, dto);
     }
 
-    @GetMapping("/company")
+    @GetMapping("/companies")
     public ServerResponseDto getAllCompanies() {
         return companyService.getCompanies();
     }
@@ -65,7 +66,7 @@ public class AdminController {
         return requestService.getRequestsForAdmin();
     }
 
-    @PostMapping("/verify-account")
+    @PostMapping("/verify-client")
     public ServerResponseDto verifyClient(@RequestParam String username,
                                           @RequestBody ActionDto dto) {
         return requestService.verifyRequest(username, dto);

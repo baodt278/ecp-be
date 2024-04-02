@@ -7,13 +7,11 @@ import org.ecp.backend.dto.response.ServerResponseDto;
 import org.ecp.backend.service.AdminService;
 import org.ecp.backend.service.ClientService;
 import org.ecp.backend.service.EmployeeService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@CrossOrigin(origins = { "*" })
 @RequestMapping("/api")
 public class UserController {
     private final AdminService adminService;

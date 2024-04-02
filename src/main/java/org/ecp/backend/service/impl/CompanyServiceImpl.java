@@ -38,7 +38,7 @@ public class CompanyServiceImpl implements CompanyService {
     @Override
     public ServerResponseDto getCompany(String acronym){
         if (!companyRepo.existsByAcronym(acronym))
-            throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Cong ty khong ton tai");
+            throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Công ty không tồn tại!");
         return new ServerResponseDto(CommonConstant.SUCCESS, companyRepo.findByAcronym(acronym));
     }
 }

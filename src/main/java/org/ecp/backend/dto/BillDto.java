@@ -1,5 +1,6 @@
 package org.ecp.backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
@@ -16,10 +17,14 @@ import java.util.Date;
 @AllArgsConstructor
 public class BillDto {
     private String code;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date createdAt;
 
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private Date start;
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private Date end;
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private Date expire;
 
     private double consume;
@@ -33,5 +38,4 @@ public class BillDto {
     private double total;
 
     private BillStatus status;
-    private String contractName;
 }

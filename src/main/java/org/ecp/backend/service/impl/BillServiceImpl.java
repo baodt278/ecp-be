@@ -23,8 +23,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import static org.ecp.backend.utils.CalculatorUtils.calculateNormal;
-import static org.ecp.backend.utils.CalculatorUtils.getPrices;
+import static org.ecp.backend.utils.CalculatorUtils.*;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +41,13 @@ public class BillServiceImpl implements BillService {
     }
 
     @Override
+    public ServerResponseDto getBillCurrentMonth(String username) {
+        Date date = new Date();
+        Date endOfMonth = DateUtils.getEndOfMonth(date);
+        return new ServerResponseDto(CommonConstant.SUCCESS, billRepo.findByUsernameAndEndDate(username, endOfMonth));
+    }
+
+    @Override
     public ServerResponseDto payBill(String code) {
         Bill bill = billRepo.findByCode(code)
                 .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Hoa don nay khong ton tai"));
@@ -49,17 +55,20 @@ public class BillServiceImpl implements BillService {
         billRepo.save(bill);
         return new ServerResponseDto(CommonConstant.SUCCESS, "Da thanh toan thanh cong");
     }
+
     @Override
     public ServerResponseDto getBillsCompany(String acronym, Date date) {
         Date endOfMonth = DateUtils.getEndOfMonth(date);
-        List<BillDto> dtos = billRepo.findByCompanyAndStatusAndEndDate(acronym, null, endOfMonth);
+        String stringTime = DateUtils.convertDateToString(endOfMonth, "yyyy-MM-dd");
+        List<BillDto> dtos = billRepo.findByCompanyAndStatusAndEndDate(acronym, null, stringTime);
         return new ServerResponseDto(CommonConstant.SUCCESS, dtos);
     }
 
     @Override
     public ServerResponseDto totalAnalyst(String acronym, Date date) {
         Date endOfMonth = DateUtils.getEndOfMonth(date);
-        List<BillDto> dtos = billRepo.findByCompanyAndStatusAndEndDate(acronym, BillStatus.PAID, endOfMonth);
+        String stringTime = DateUtils.convertDateToString(endOfMonth, "yyyy-MM-dd");
+        List<BillDto> dtos = billRepo.findByCompanyAndStatusAndEndDate(acronym, BillStatus.PAID, stringTime);
         double total = dtos.stream().mapToDouble(BillDto::getTotal).sum();
         return new ServerResponseDto(CommonConstant.SUCCESS, total);
     }
@@ -68,30 +77,28 @@ public class BillServiceImpl implements BillService {
     public ServerResponseDto manualCreate(String contractName, Date date) {
         Date startOfMonth = DateUtils.getStartOfMonth(date);
         Date endOfMonth = DateUtils.getEndOfMonth(date);
+        if (billRepo.existsByEnd(endOfMonth))
+            throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Đã có hóa đơn cho tháng này!");
         int expire_after_days = Integer.parseInt(baseRepo.getValue(CommonConstant.EXPIRED_AFTER_DAYS));
         Date expireDate = DateUtils.add(endOfMonth, Calendar.DATE, expire_after_days);
         Contract contract = contractRepo.findByName(contractName)
-                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong ton tai hop dong"));
+                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tồn tại hợp đồng!"));
         ContractType type = contract.getType();
         Volt volt = contract.getVolt();
         List<Double> values = priceRepo.findValueByTypeAndVolt(type, volt);
         double[] prices = getPrices(values);
         List<Record> records = recordRepo.findByContractNameAndTimeRange(contractName, startOfMonth, endOfMonth);
         int size = records.size();
-        double consume = records.stream().mapToDouble(Record::getConsume).sum();
-        double normal = records.stream().mapToDouble(Record::getNormal).sum();
-        double low = records.stream().mapToDouble(Record::getLow).sum();
-        double high = records.stream().mapToDouble(Record::getHigh).sum();
+        double consume = size == 0 ? 0.0: calculateConsume(records, size);
+        double normal = size == 0 ? 0.0: calculateNormal(records, size);
+        double low = size == 0 ? 0.0: calculateLow(records, size);
+        double high = size == 0 ? 0.0: calculateHigh(records, size);
         double cost = switch (type) {
             case FAMILY -> CalculatorUtils.calFamily(contract.getHouses(), consume, prices);
-            case EDU_MEDIC, PUBLIC_GOV -> {
-                double normal1 = calculateNormal(records, size);
-                yield CalculatorUtils.calComplexPublicGovEduMedic(normal1, prices[0]);
-            }
+            case EDU_MEDIC, PUBLIC_GOV -> CalculatorUtils.calComplexPublicGovEduMedic(normal, prices[0]);
             case PRODUCE, BUSINESS -> CalculatorUtils.calProduceBusiness(normal, low, high, prices);
             default -> 0;
         };
-
         List<Charge> charges = chargeRepo.findByContractNameAndCreatedAtBetween(contractName, startOfMonth, endOfMonth);
         int tax_percent = Integer.parseInt(baseRepo.getValue(CommonConstant.TAX_PERCENT));
         double tax = cost * tax_percent / 100;

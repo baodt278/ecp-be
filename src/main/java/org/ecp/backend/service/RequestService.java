@@ -1,8 +1,6 @@
 package org.ecp.backend.service;
 
-import org.ecp.backend.dto.request.AcceptRequest;
-import org.ecp.backend.dto.request.ActionDto;
-import org.ecp.backend.dto.request.RequestDto;
+import org.ecp.backend.dto.request.*;
 import org.ecp.backend.dto.response.ServerResponseDto;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,13 +12,17 @@ public interface RequestService {
 
     ServerResponseDto getRequestsForClient(String username);
 
-    ServerResponseDto requestVerify(String username, MultipartFile file);
-
     ServerResponseDto getRequestsForAdmin();
+
+    ServerResponseDto requestVerify(String username, DumbDto dto);
 
     ServerResponseDto verifyRequest(String username, ActionDto dto);
 
     ServerResponseDto createRequest(String username, RequestDto dto);
+
+    ServerResponseDto updateRequest(String username, UpdateRequestDto dto);
+
+    ServerResponseDto deleteRequest(String username, String code);
 
     ServerResponseDto reviewRequest(String username, ActionDto dto);
 

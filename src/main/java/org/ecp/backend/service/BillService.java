@@ -7,6 +7,8 @@ import java.util.Date;
 public interface BillService {
     ServerResponseDto getBillsContract(String contractName);
 
+    ServerResponseDto getBillCurrentMonth(String username);
+
     ServerResponseDto payBill(String code);
 
     ServerResponseDto getBillsCompany(String acronym, Date date);

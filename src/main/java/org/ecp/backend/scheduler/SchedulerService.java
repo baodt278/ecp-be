@@ -26,13 +26,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.ecp.backend.utils.CalculatorUtils.getPrices;
+import static org.ecp.backend.utils.CalculatorUtils.*;
 
 @Service
 @RequiredArgsConstructor
@@ -46,12 +43,17 @@ public class SchedulerService {
     @Value("${file_path}")
     private String filePath;
 
-    @Scheduled(cron = "0 0 6 1 * ?")
+    //    @Scheduled(cron = "0 0 6 1 * ?")
     public ServerResponseDto createBill() {
-        billRepo.saveAll(contractRepo.findAll().stream().map(this::createBillLastMonth).collect(Collectors.toList()));
+        List<Bill> bills = contractRepo.findAll().stream()
+                .map(this::createBillLastMonth)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        billRepo.saveAll(bills);
         return new ServerResponseDto(CommonConstant.SUCCESS, "Tao hoa don hang thang thanh cong");
     }
-    @Scheduled(cron = "0 0 6 15 * ?")
+
+    //    @Scheduled(cron = "0 0 6 15 * ?")
     public ServerResponseDto updateExpire() {
         List<Bill> bills = billRepo.findBillsByStatusAndExpireDate(BillStatus.UNPAID, new Date());
         bills.forEach(bill -> bill.setStatus(BillStatus.EXPIRED));
@@ -59,7 +61,7 @@ public class SchedulerService {
         return new ServerResponseDto(CommonConstant.SUCCESS, "Thay doi hoa don hang thang thanh cong");
     }
 
-    @Scheduled(cron = "0 0 1 * * ?")
+    //    @Scheduled(cron = "0 0 1 * * ?")
     public ServerResponseDto insertRecords() {
         List<String> names = getTxtFileNames(filePath);
         recordRepo.saveAll(names.stream().map(this::insertRecord).collect(Collectors.toList()));
@@ -70,16 +72,19 @@ public class SchedulerService {
         Date date = DateUtils.add(new Date(), Calendar.DATE, -1);
         Date startOfMonth = DateUtils.getStartOfMonth(date);
         Date endOfMonth = DateUtils.getEndOfMonth(date);
+        if (billRepo.existsByEnd(endOfMonth))
+            return null;
         int expire_after_days = Integer.parseInt(baseRepo.getValue(CommonConstant.EXPIRED_AFTER_DAYS));
         Date expireDate = DateUtils.add(endOfMonth, Calendar.DATE, expire_after_days);
         ContractType type = contract.getType();
         Volt volt = contract.getVolt();
         double[] prices = getPrices(priceRepo.findValueByTypeAndVolt(type, volt));
         List<Record> records = recordRepo.findByContractNameAndTimeRange(contract.getName(), startOfMonth, endOfMonth);
-        double consume = records.stream().mapToDouble(Record::getConsume).sum();
-        double normal = records.stream().mapToDouble(Record::getNormal).sum();
-        double low = records.stream().mapToDouble(Record::getLow).sum();
-        double high = records.stream().mapToDouble(Record::getHigh).sum();
+        int size = records.size();
+        double consume = size == 0 ? 0.0 : calculateConsume(records, size);
+        double normal = size == 0 ? 0.0 : calculateNormal(records, size);
+        double low = size == 0 ? 0.0 : calculateLow(records, size);
+        double high = size == 0 ? 0.0 : calculateHigh(records, size);
         double cost = calculateCost(type, contract.getHouses(), consume, normal, low, high, prices);
         double tax = cost * Integer.parseInt(baseRepo.getValue(CommonConstant.TAX_PERCENT)) / 100;
         double charge = chargeRepo.findByContractNameAndCreatedAtBetween(contract.getName(), startOfMonth, endOfMonth)

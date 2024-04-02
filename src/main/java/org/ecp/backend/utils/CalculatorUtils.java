@@ -6,6 +6,7 @@ import org.ecp.backend.enums.ContractType;
 import org.ecp.backend.enums.Volt;
 
 import java.util.List;
+import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
 public class CalculatorUtils {
@@ -28,10 +29,9 @@ public class CalculatorUtils {
     public static double[] getPrices(List<Double> values) {
         return values.stream().mapToDouble(Double::doubleValue).toArray();
     }
+
     public static double calFamily(int houses, double consume, double[] prices) {
-        int[] limits = IntStream.rangeClosed(1, 5)
-                .map(i -> getLimit(i, houses))
-                .toArray();
+        double[] limits = {51.0 * houses, 101.0 * houses, 201.0 * houses, 301.0 * houses, 401.0 * houses, 99999999999999999999999999999999999.0};
         double cost = 0.0;
         int tierIndex = 0;
         while (consume > 0 && tierIndex < limits.length - 1) {
@@ -41,14 +41,6 @@ public class CalculatorUtils {
             tierIndex++;
         }
         return cost;
-    }
-
-    private static int getLimit(int i, int houses) {
-        try {
-            return CommonConstant.class.getField("LIMIT" + i).getInt(null) * Math.max(houses, 1);
-        } catch (Exception e) {
-            throw new RuntimeException();
-        }
     }
 
 
@@ -61,5 +53,9 @@ public class CalculatorUtils {
         double costNormal = normal * prices[1];
         double costHigh = high * prices[2];
         return costNormal + costLow + costHigh;
+    }
+
+    public static double roundToTwoDecimalPlaces(double num) {
+        return Math.round(num * 100.0) / 100.0;
     }
 }

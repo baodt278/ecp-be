@@ -15,6 +15,10 @@ file_path: C:/record/
 spring:
     application:
         name: ecp
+    servlet:
+        multipart:
+            max-file-size: 10MB
+            max-request-size: 20MB
     datasource:
         driver-class-name: org.mariadb.jdbc.Driver
         url: jdbc:mariadb://127.0.0.1:3307/ecp

@@ -20,10 +20,7 @@ import org.ecp.backend.utils.CalculatorUtils;
 import org.ecp.backend.utils.DateUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -40,7 +37,10 @@ public class RecordServiceImpl implements RecordService {
     @Override
     public ServerResponseDto createRecord(String contractName, RecordDto dto) {
         Contract contract = contractRepo.findByName(contractName)
-                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong ton tai hop dong"));
+                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tồn tại hợp đồng!"));
+        Record recordCheck = recordRepo.findByStringTime(DateUtils.convertDateToString(dto.getTime(), "yyyy-MM-dd"));
+        if (recordCheck != null)
+            throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Đã có bản ghi tồn tại!");
         Record record = Record.builder()
                 .time(dto.getTime())
                 .consume(dto.getConsume())
@@ -58,7 +58,7 @@ public class RecordServiceImpl implements RecordService {
         Date now = new Date();
         Date startOfMonth = DateUtils.getStartOfMonth(now);
         Contract contract = contractRepo.findByName(contractName)
-                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong ton tai hop dong"));
+                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tồn tại hợp đồng!"));
         List<Record> records = recordRepo.findByContractNameAndTimeRange(contractName, startOfMonth, now);
         int size = records.size();
         if (size == 0) return new ServerResponseDto(CommonConstant.SUCCESS, new PredictValueDto(0, 0, 0, 0, 0));
@@ -99,17 +99,17 @@ public class RecordServiceImpl implements RecordService {
     public ServerResponseDto findRecordsCurrentMonth(String contractName) {
         Date now = new Date();
         Date startOfMonth = DateUtils.getStartOfMonth(now);
-        List<Record> records = recordRepo.findByContractNameAndTimeRange(contractName, startOfMonth, now);
+        List<RecordDto> records = recordRepo.findByContractNameOnTimeRange(contractName, startOfMonth, now);
         return new ServerResponseDto(CommonConstant.SUCCESS, records);
     }
 
     @Override
     public ServerResponseDto findConsumeTime7DaysBefore(String contractName) {
         List<RecordDto> dtos = new ArrayList<>();
-        Date yesterday = DateUtils.add(new Date(), Calendar.DATE, -1);
-        Date day7Before = DateUtils.add(yesterday, Calendar.DATE, -7);
-        Date day8Before = DateUtils.add(yesterday, Calendar.DATE, -8);
-        Record record8Before = recordRepo.findByTime(day8Before);
+        Date yesterday = DateUtils.getEndOfDay(DateUtils.add(new Date(), Calendar.DATE, -1));
+        Date day7Before = DateUtils.getStartOfDay(DateUtils.add(yesterday, Calendar.DATE, -6));
+        String day8Before = DateUtils.convertDateToString(DateUtils.add(yesterday, Calendar.DATE, -7), "yyyy-MM-dd");
+        Record record8Before = recordRepo.findByStringTime(day8Before);
         List<Record> records = recordRepo.findByContractNameAndTimeRange(contractName, day7Before, yesterday);
 
         for (int i = 0; i < records.size(); i++) {
@@ -118,7 +118,7 @@ public class RecordServiceImpl implements RecordService {
             RecordDto dto = createRecordDto(currentRecord, previousRecord);
             dtos.add(dto);
         }
-
+        dtos.removeAll(Collections.singleton(null));
         return new ServerResponseDto(CommonConstant.SUCCESS, dtos);
     }
 
@@ -127,10 +127,10 @@ public class RecordServiceImpl implements RecordService {
             return new RecordDto(currentRecord.getTime(), 0, 0, 0, 0);
         } else {
             return new RecordDto(currentRecord.getTime(),
-                    currentRecord.getConsume() - previousRecord.getConsume(),
-                    currentRecord.getNormal() - previousRecord.getNormal(),
-                    currentRecord.getLow() - previousRecord.getLow(),
-                    currentRecord.getHigh() - previousRecord.getHigh());
+                    CalculatorUtils.roundToTwoDecimalPlaces(currentRecord.getConsume() - previousRecord.getConsume()),
+                    CalculatorUtils.roundToTwoDecimalPlaces(currentRecord.getNormal() - previousRecord.getNormal()),
+                    CalculatorUtils.roundToTwoDecimalPlaces(currentRecord.getLow() - previousRecord.getLow()),
+                    CalculatorUtils.roundToTwoDecimalPlaces(currentRecord.getHigh() - previousRecord.getHigh()));
         }
     }
 
@@ -139,6 +139,7 @@ public class RecordServiceImpl implements RecordService {
         List<RecordDto> dtos = IntStream.rangeClosed(1, 6)
                 .mapToObj(i -> findTotalPerMonth(contractName, new Date(), -i))
                 .collect(Collectors.toList());
+        dtos.removeAll(Collections.singleton(null));
         return new ServerResponseDto(CommonConstant.SUCCESS, dtos);
     }
 

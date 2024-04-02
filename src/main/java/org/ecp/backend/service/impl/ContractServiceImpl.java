@@ -19,14 +19,14 @@ public class ContractServiceImpl implements ContractService {
     @Override
     public ServerResponseDto getContractClientOwner(String username){
         if (!clientRepo.existsByUsername(username))
-            throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong ton tai tai khoan nay");
+            throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Tài khoản không tồn tại!");
         return new ServerResponseDto(CommonConstant.SUCCESS, contractRepo.findContractClientOwner(username));
     }
 
     @Override
     public ServerResponseDto getContractCompanySign(String acronym){
         if (!companyRepo.existsByAcronym(acronym))
-            throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong ton tai tai khoan nay");
+            throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Tài khoản không tồn tại!");
         return new ServerResponseDto(CommonConstant.SUCCESS, contractRepo.findContractCompanySign(acronym));
     }
 }

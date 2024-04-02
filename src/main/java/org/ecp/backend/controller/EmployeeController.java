@@ -16,6 +16,7 @@ import java.util.Date;
 
 @RestController
 @RequiredArgsConstructor
+@CrossOrigin(origins = { "*" })
 @RequestMapping("/api/employee")
 public class EmployeeController {
     private final EmployeeService employeeService;

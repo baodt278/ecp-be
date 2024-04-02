@@ -27,9 +27,9 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public ServerResponseDto login(LoginRequest dto) {
         Client client = clientRepo.findByUsername(dto.getUsername())
-                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Tai khoan khong ton tai"));
+                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Tài khoản không tồn tại!"));
         if (!encoder.matches(dto.getPassword(), client.getPassword()))
-            throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Sai tai khoan hoac mat khau");
+            throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Tài khoản hoặc mật khẩu không đúng!");
         ClientResponse response = new ClientResponse(client.getUsername(), client.getRole(), client.getActive());
         return new ServerResponseDto(CommonConstant.SUCCESS, response);
     }
@@ -39,9 +39,9 @@ public class ClientServiceImpl implements ClientService {
         String username = dto.getUsername();
         String email = dto.getEmail();
         if (clientRepo.existsByUsername(username))
-            throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Username da ton tai");
+            throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Tên đăng nhập đã tồn tại!");
         if (clientRepo.existsByEmail(email))
-            throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Email da duoc su dung");
+            throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Email đã được sử dụng!");
         Client client = Client.builder()
                 .username(username)
                 .password(encoder.encode(dto.getPassword()))
@@ -50,40 +50,40 @@ public class ClientServiceImpl implements ClientService {
                 .active(false)
                 .build();
         clientRepo.save(client);
-        return new ServerResponseDto(CommonConstant.SUCCESS, "Tao tai khoan thanh cong");
+        return new ServerResponseDto(CommonConstant.SUCCESS, "Tạo tài khoản thành công!");
     }
 
     @Override
     public ServerResponseDto changePassword(String username, PasswordRequest dto) {
         Client client = clientRepo.findByUsername(username)
-                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan"));
+                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy tài khoản!"));
         if (!encoder.matches(dto.getOldPassword(), client.getPassword()))
-            throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Sai mat khau");
+            throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Mật khẩu không đúng");
         client.setPassword(encoder.encode(dto.getNewPassword()));
         clientRepo.save(client);
-        return new ServerResponseDto(CommonConstant.SUCCESS, "Thay doi mat khau thanh cong");
+        return new ServerResponseDto(CommonConstant.SUCCESS, "Thay đổi mật khẩu thành công!");
     }
 
     @Override
     public ServerResponseDto updateInfo(String username, UserInfoDto dto) {
         Client client = clientRepo.findByUsername(username)
-                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan"));
+                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy tài khoản!"));
         String email = dto.getEmail();
         if (StringUtils.isNotBlank(email) || clientRepo.existsByEmail(email))
-            throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Email da duoc su dung");
+            throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Email đã được sử dụng!");
         client.setEmail(StringUtils.defaultIfEmpty(email, client.getEmail()));
         client.setPhone(StringUtils.defaultIfEmpty(dto.getPhone(), client.getPhone()));
         client.setAddress(StringUtils.defaultIfEmpty(dto.getAddress(), client.getAddress()));
         client.setFullName(StringUtils.defaultIfEmpty(dto.getFullName(), client.getFullName()));
         client.setAvatar(StringUtils.defaultIfEmpty(dto.getAvatar(), client.getAvatar()));
         clientRepo.save(client);
-        return new ServerResponseDto(CommonConstant.SUCCESS, "Thay doi thong tin thanh cong");
+        return new ServerResponseDto(CommonConstant.SUCCESS, "Thay đổi thông tin thành công!");
     }
 
     @Override
     public ServerResponseDto getInfo(String username) {
         Client client = clientRepo.findByUsername(username)
-                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan"));
+                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy tài khoản!"));
         UserInfoDto infoDto = new UserInfoDto(client.getEmail(), client.getPhone(), client.getAddress(), client.getFullName(), client.getAvatar());
         return new ServerResponseDto(CommonConstant.SUCCESS, infoDto);
     }
@@ -91,7 +91,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public ServerResponseDto getDetailInfo(String username){
         Client client = clientRepo.findByUsername(username)
-                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay tai khoan"));
+                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy tài khoản!"));
         DetailDto dto = new DetailDto(client.getPersonId(), client.getPersonName(), client.getDateOfBirth(), client.getActive());
         return new ServerResponseDto(CommonConstant.SUCCESS, dto);
     }
