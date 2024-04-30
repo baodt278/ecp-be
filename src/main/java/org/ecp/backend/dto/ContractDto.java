@@ -17,8 +17,10 @@ public class ContractDto {
     private String name;
     private String address;
     private Integer houses;
-    @JsonFormat(pattern = "yyyy-MM-dd")
+    @JsonFormat(pattern = "dd/MM/yyyy")
     private Date createdAt;
+    @JsonFormat(pattern = "dd/MM/yyyy")
+    private Date updatedAt;
     private ContractType type;
     private ContractStatus status;
     private Volt volt;

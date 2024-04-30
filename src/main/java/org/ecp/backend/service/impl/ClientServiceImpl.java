@@ -3,6 +3,7 @@ package org.ecp.backend.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.ecp.backend.constant.CommonConstant;
+import org.ecp.backend.dto.request.DumbDto;
 import org.ecp.backend.dto.request.PasswordRequest;
 import org.ecp.backend.dto.request.LoginRequest;
 import org.ecp.backend.dto.request.RegisterRequest;
@@ -15,6 +16,7 @@ import org.ecp.backend.enums.Role;
 import org.ecp.backend.exception.ApplicationRuntimeException;
 import org.ecp.backend.repository.ClientRepository;
 import org.ecp.backend.service.ClientService;
+import org.ecp.backend.service.MinioService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 public class ClientServiceImpl implements ClientService {
     private final ClientRepository clientRepo;
     private final PasswordEncoder encoder;
+    private final MinioService minioService;
 
     @Override
     public ServerResponseDto login(LoginRequest dto) {
@@ -30,7 +33,7 @@ public class ClientServiceImpl implements ClientService {
                 .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Tài khoản không tồn tại!"));
         if (!encoder.matches(dto.getPassword(), client.getPassword()))
             throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Tài khoản hoặc mật khẩu không đúng!");
-        ClientResponse response = new ClientResponse(client.getUsername(), client.getRole(), client.getActive());
+        ClientResponse response = new ClientResponse(client.getUsername(), client.getRole(), client.getActive(), minioService.getUrl(client.getAvatar()));
         return new ServerResponseDto(CommonConstant.SUCCESS, response);
     }
 
@@ -69,30 +72,37 @@ public class ClientServiceImpl implements ClientService {
         Client client = clientRepo.findByUsername(username)
                 .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy tài khoản!"));
         String email = dto.getEmail();
-        if (StringUtils.isNotBlank(email) || clientRepo.existsByEmail(email))
+        if (clientRepo.existsByEmail(email) && !client.getEmail().equals(email))
             throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Email đã được sử dụng!");
         client.setEmail(StringUtils.defaultIfEmpty(email, client.getEmail()));
         client.setPhone(StringUtils.defaultIfEmpty(dto.getPhone(), client.getPhone()));
         client.setAddress(StringUtils.defaultIfEmpty(dto.getAddress(), client.getAddress()));
-        client.setFullName(StringUtils.defaultIfEmpty(dto.getFullName(), client.getFullName()));
-        client.setAvatar(StringUtils.defaultIfEmpty(dto.getAvatar(), client.getAvatar()));
         clientRepo.save(client);
         return new ServerResponseDto(CommonConstant.SUCCESS, "Thay đổi thông tin thành công!");
+    }
+
+    @Override
+    public ServerResponseDto uploadAvatar(String username, DumbDto dto) {
+        Client client = clientRepo.findByUsername(username)
+                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy tài khoản!"));
+        client.setAvatar(minioService.uploadFile(dto.getFiles()[0]));
+        clientRepo.save(client);
+        return new ServerResponseDto(CommonConstant.SUCCESS, "Thay đổi ảnh đại diện thành công!");
     }
 
     @Override
     public ServerResponseDto getInfo(String username) {
         Client client = clientRepo.findByUsername(username)
                 .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy tài khoản!"));
-        UserInfoDto infoDto = new UserInfoDto(client.getEmail(), client.getPhone(), client.getAddress(), client.getFullName(), client.getAvatar());
+        UserInfoDto infoDto = new UserInfoDto(client.getEmail(), client.getPhone(), client.getAddress(), client.getFullName(), minioService.getUrl(client.getAvatar()));
         return new ServerResponseDto(CommonConstant.SUCCESS, infoDto);
     }
 
     @Override
-    public ServerResponseDto getDetailInfo(String username){
+    public ServerResponseDto getDetailInfo(String username) {
         Client client = clientRepo.findByUsername(username)
                 .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy tài khoản!"));
-        DetailDto dto = new DetailDto(client.getPersonId(), client.getPersonName(), client.getDateOfBirth(), client.getActive());
+        DetailDto dto = new DetailDto(client.getPersonId(), client.getPersonName(), client.getDateOfBirth());
         return new ServerResponseDto(CommonConstant.SUCCESS, dto);
     }
 }

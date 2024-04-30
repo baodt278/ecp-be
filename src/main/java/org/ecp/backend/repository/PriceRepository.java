@@ -2,7 +2,6 @@ package org.ecp.backend.repository;
 
 import org.ecp.backend.entity.Price;
 import org.ecp.backend.enums.ContractType;
-import org.ecp.backend.enums.PriceTag;
 import org.ecp.backend.enums.Volt;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,4 +15,6 @@ public interface PriceRepository extends JpaRepository<Price, Long> {
             "AND p.volt = :volt " +
             "ORDER BY p.price ASC")
     List<Double> findValueByTypeAndVolt(ContractType type, Volt volt);
+    @Query("SELECT p FROM Price p ORDER BY p.contractType ASC, p.volt ASC, p.tag ASC")
+    List<Price> findAllPrices();
 }

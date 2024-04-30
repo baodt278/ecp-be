@@ -34,3 +34,15 @@ spring:
                 order_inserts: true
                 jdbc:
                     batch_size: 50
+    mail:
+        host: smtp.gmail.com
+        port: 587
+        username: doantuanbao2708@gmail.com
+        password: knnyiatmmgbrtbdg
+        protocol: smtp
+        properties:
+            mail:
+                smtp:
+                    auth: true
+                    starttls:
+                        enable: true

@@ -23,7 +23,7 @@ public class News {
     @Column(columnDefinition = "text")
     private String content;
     private Date time;
-    private String companyName;
+    private String acronym;
 
     @JdbcTypeCode(SqlTypes.JSON)
     private List<String> images;

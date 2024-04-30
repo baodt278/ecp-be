@@ -6,6 +6,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface RequestService {
 
+    ServerResponseDto getRequestsVerifyForClient(String username);
+
     ServerResponseDto getRequestsForStaff(String acronym);
 
     ServerResponseDto getRequestsForManager(String acronym);
@@ -13,6 +15,8 @@ public interface RequestService {
     ServerResponseDto getRequestsForClient(String username);
 
     ServerResponseDto getRequestsForAdmin();
+
+    ServerResponseDto getRequestForCompany(String acronym);
 
     ServerResponseDto requestVerify(String username, DumbDto dto);
 

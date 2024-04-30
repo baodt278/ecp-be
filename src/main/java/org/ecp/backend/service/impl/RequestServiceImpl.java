@@ -1,6 +1,7 @@
 package org.ecp.backend.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ecp.backend.constant.CommonConstant;
 import org.ecp.backend.dto.request.*;
@@ -10,6 +11,7 @@ import org.ecp.backend.entity.*;
 import org.ecp.backend.enums.*;
 import org.ecp.backend.exception.ApplicationRuntimeException;
 import org.ecp.backend.repository.*;
+import org.ecp.backend.service.MailService;
 import org.ecp.backend.service.MinioService;
 import org.ecp.backend.service.RequestService;
 import org.ecp.backend.utils.DateUtils;
@@ -40,12 +42,27 @@ public class RequestServiceImpl implements RequestService {
     private final ContractRepository contractRepo;
     private final ChargeRepository chargeRepo;
     private final MinioService minioService;
+    private final MailService mailService;
     @Value("${id_extract_url}")
     private String url;
 
     @Override
     public ServerResponseDto getRequestsForAdmin() {
         List<Request> requests = requestRepo.findRequestsBy(RequestType.CLIENT_VERIFY, RequestStatus.PENDING);
+        List<RequestResponse> responses = requests.stream().map(this::getRequestResponse).toList();
+        return new ServerResponseDto(CommonConstant.SUCCESS, responses);
+    }
+
+    @Override
+    public ServerResponseDto getRequestForCompany(String acronym) {
+        List<Request> requests = requestRepo.findRequestsByCompanyAcronym(acronym);
+        List<RequestResponse> responses = requests.stream().map(this::getRequestResponse).toList();
+        return new ServerResponseDto(CommonConstant.SUCCESS, responses);
+    }
+
+    @Override
+    public ServerResponseDto getRequestsVerifyForClient(String username) {
+        List<Request> requests = requestRepo.findVerifyRequestsByClient(username);
         List<RequestResponse> responses = requests.stream().map(this::getRequestResponse).toList();
         return new ServerResponseDto(CommonConstant.SUCCESS, responses);
     }
@@ -68,7 +85,7 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public ServerResponseDto getRequestsForClient(String username) {
-        List<Request> requests = requestRepo.findRequestsByClient_Username(username);
+        List<Request> requests = requestRepo.findRequestsForClient(username);
         List<RequestResponse> responses = requests.stream().map(this::getRequestResponse).toList();
         return new ServerResponseDto(CommonConstant.SUCCESS, responses);
     }
@@ -88,10 +105,13 @@ public class RequestServiceImpl implements RequestService {
                     .info(getDataFromIdExtract(dto.getFiles()[0]))
                     .client(client)
                     .build();
+            String personId = convertJsonToArray(request.getInfo())[0];
+            if (clientRepo.existsByPersonId(personId))
+                throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "CCCD đã được sử dụng!");
             requestRepo.save(request);
-            return new ServerResponseDto(CommonConstant.SUCCESS, "Da gui yeu cau xac minh tai khoan");
+            return new ServerResponseDto(CommonConstant.SUCCESS, "Đã gửi yêu cầu xác minh tài khoản!");
         } catch (Exception e) {
-            throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Loi khi tao yeu cau xac minh");
+            throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Lỗi khi gửi yêu cầu xác minh tài khoản!");
         }
     }
 
@@ -100,14 +120,15 @@ public class RequestServiceImpl implements RequestService {
         if (!adminRepo.existsByUsername(username))
             throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy tài khoản!");
         Request request = requestRepo.findRequestByCode(dto.getCode())
-                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay yeu cau"));
+                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy yêu cầu"));
         request.setAcceptedBy(username);
         request.setAcceptedAt(new Date());
         request.setAcceptText(dto.getText());
         request.setStatus(RequestStatus.valueOf(dto.getStatus()));
         requestRepo.save(request);
         updateInfoClient(request);
-        return new ServerResponseDto(CommonConstant.SUCCESS, "Da thuc hien xac minh tai khoan");
+        mailService.sendMail("doantuanbao2708@gmail.com", "Hệ thống điện", request.getClient().getEmail(), "Xác minh tài khoản", request.getStatus() == RequestStatus.APPROVED ? "Tài khoản của bạn đã được xác minh!\nBạn có thể sử dụng dịch vụ của chúng tôi!" : "Tài khoản của bạn chưa được xác minh!\nVui long kiểm tra lại thông tin!");
+        return new ServerResponseDto(CommonConstant.SUCCESS, "Đã xác minh yêu cầu!");
     }
 
     @Override
@@ -115,8 +136,16 @@ public class RequestServiceImpl implements RequestService {
         try {
             Client client = clientRepo.findByUsername(username)
                     .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy tài khoản!"));
-            Company company = companyRepo.findByAcronym(dto.getAcronymCompany())
-                    .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay cong ty"));
+            Company company;
+            if (!dto.getAcronymCompany().isEmpty()) {
+                company = companyRepo.findByAcronym(dto.getAcronymCompany())
+                        .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy công ty!"));
+            } else {
+                String contractName = dto.getInfo().split("\\|")[0];
+                Contract contract = contractRepo.findByName(contractName)
+                        .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy hợp đồng!"));
+                company = contract.getCompany();
+            }
             Request request = Request.builder()
                     .code(GenerateUtils.generatedCode())
                     .description(dto.getDescription())
@@ -129,19 +158,19 @@ public class RequestServiceImpl implements RequestService {
                     .client(client)
                     .build();
             requestRepo.save(request);
-            return new ServerResponseDto(CommonConstant.SUCCESS, "Da gui yeu cau");
+            return new ServerResponseDto(CommonConstant.SUCCESS, "Đã tạo yêu cầu mới!");
         } catch (Exception e) {
-            throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Loi khi tao yeu cau");
+            throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Lỗi khi tạo yêu cầu!");
         }
     }
+
     @Override
-    public ServerResponseDto updateRequest(String username, UpdateRequestDto dto){
+    public ServerResponseDto updateRequest(String username, UpdateRequestDto dto) {
         try {
-            if(!clientRepo.existsByUsername(username))
+            if (!clientRepo.existsByUsername(username))
                 throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy tài khoản!");
             Request request = requestRepo.findRequestByCode(dto.getCode())
                     .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy yêu cầu!"));
-            request.setInfo(StringUtils.defaultIfEmpty(dto.getInfo(), request.getInfo()));
             request.setDescription(StringUtils.defaultIfEmpty(dto.getDescription(), request.getDescription()));
             request.setImages(dto.getImages() == null ? request.getImages() : Arrays.stream(dto.getImages()).map(minioService::uploadFile).toList());
             requestRepo.save(request);
@@ -150,10 +179,11 @@ public class RequestServiceImpl implements RequestService {
             throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Lỗi khi cập nhật yêu cầu!");
         }
     }
+
     @Override
-    public ServerResponseDto deleteRequest(String username, String code){
+    public ServerResponseDto deleteRequest(String username, String code) {
         try {
-            if(!clientRepo.existsByUsername(username))
+            if (!clientRepo.existsByUsername(username))
                 throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy tài khoản!");
             Request request = requestRepo.findRequestByCode(code)
                     .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy yêu cầu!"));
@@ -163,35 +193,35 @@ public class RequestServiceImpl implements RequestService {
             throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Lỗi khi hủy yêu cầu!");
         }
     }
+
     @Override
     public ServerResponseDto reviewRequest(String username, ActionDto dto) {
         if (!employeeRepo.existsByUsername(username))
             throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy tài khoản!");
         Request request = requestRepo.findRequestByCode(dto.getCode())
-                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay yeu cau"));
+                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy yêu cầu"));
         request.setReviewedBy(username);
         request.setReviewedAt(new Date());
         request.setReviewText(dto.getText());
         request.setStatus(RequestStatus.valueOf(dto.getStatus()));
         requestRepo.save(request);
-        return new ServerResponseDto(CommonConstant.SUCCESS, "Da xac minh yeu cau");
+        return new ServerResponseDto(CommonConstant.SUCCESS, "Đã xác minh yêu cầu");
     }
 
     @Override
     public ServerResponseDto acceptRequest(String username, AcceptRequest dto) {
-        ActionDto action = dto.getAction();
         List<ChargeDto> charges = dto.getCharges();
         if (!employeeRepo.existsByUsername(username))
             throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy tài khoản!");
-        Request request = requestRepo.findRequestByCode(action.getCode())
-                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Khong tim thay yeu cau"));
+        Request request = requestRepo.findRequestByCode(dto.getCode())
+                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy yêu cầu"));
         request.setAcceptedBy(username);
         request.setAcceptedAt(new Date());
-        request.setAcceptText(action.getText());
-        request.setStatus(RequestStatus.valueOf(action.getStatus()));
+        request.setAcceptText(dto.getText());
+        request.setStatus(RequestStatus.valueOf(dto.getStatus()));
         requestRepo.save(request);
         effectByRequest(request, charges);
-        return new ServerResponseDto(CommonConstant.SUCCESS, "Da xac minh yeu cau");
+        return new ServerResponseDto(CommonConstant.SUCCESS, "Đã xác nhận yêu cầu!");
     }
 
     private void updateInfoClient(Request request) {
@@ -207,12 +237,12 @@ public class RequestServiceImpl implements RequestService {
     }
 
     private void effectByRequest(Request request, List<ChargeDto> dtos) {
-        // "name","address","houses","type","status","volt"
+        // "name"|"address"|"houses"|"type"|"status"|"volt"
         if (request.getStatus() != RequestStatus.APPROVED) return;
         RequestType type = request.getType();
         Company company = request.getCompany();
         Client client = request.getClient();
-        String[] data = request.getInfo().split(",");
+        String[] data = request.getInfo().split("\\|");
         if (type.toString().contains("CONTRACT_")) {
             String contractName = createOrUpdateContract(type, company, client, data);
             createCharges(dtos, contractName, request.getCode(), company);
@@ -226,12 +256,13 @@ public class RequestServiceImpl implements RequestService {
                 Contract contract = Contract.builder()
                         .name(GenerateUtils.generateContract(company.getAcronym()))
                         .address(data[1])
-                        .houses(Integer.valueOf(data[2]))
+                        .houses(ObjectUtils.isEmpty(data[2]) ? 0 : Integer.parseInt(data[2]))
                         .type(ContractType.valueOf(data[3]))
                         .status(ContractStatus.ACTIVE)
                         .volt(Volt.valueOf(data[5]))
                         .company(company)
                         .client(client)
+                        .createdAt(new Date())
                         .build();
                 contractRepo.save(contract);
                 contractName = contract.getName();
@@ -240,10 +271,11 @@ public class RequestServiceImpl implements RequestService {
                 Contract contract = contractRepo.findByName(data[0])
                         .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tồn tại hợp đồng! nay"));
                 contract.setAddress(StringUtils.defaultIfEmpty(data[1], contract.getAddress()));
-                contract.setHouses(!StringUtils.isEmpty(data[2]) ? Integer.valueOf(data[2]) : contract.getHouses());
+                contract.setHouses(!StringUtils.isEmpty(data[2]) ? Integer.parseInt(data[2]) : contract.getHouses());
                 contract.setCreatedAt(new Date());
                 contract.setType(!StringUtils.isEmpty(data[3]) ? ContractType.valueOf(data[3]) : contract.getType());
                 contract.setVolt(!StringUtils.isEmpty(data[5]) ? Volt.valueOf(data[5]) : contract.getVolt());
+                contract.setUpdatedAt(new Date());
                 contractRepo.save(contract);
                 contractName = contract.getName();
             }
@@ -251,6 +283,7 @@ public class RequestServiceImpl implements RequestService {
                 Contract contract = contractRepo.findByName(data[0])
                         .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tồn tại hợp đồng! nay"));
                 contract.setStatus(!StringUtils.isEmpty(data[4]) ? ContractStatus.valueOf(data[4]) : contract.getStatus());
+                contract.setUpdatedAt(new Date());
                 contractRepo.save(contract);
                 contractName = contract.getName();
             }
@@ -268,7 +301,6 @@ public class RequestServiceImpl implements RequestService {
                     .contractName(contractName)
                     .requestCode(requestCode)
                     .createdAt(new Date())
-                    .type(dto.getType())
                     .reason(dto.getReason())
                     .value(dto.getValue())
                     .company(company)
@@ -311,6 +343,8 @@ public class RequestServiceImpl implements RequestService {
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
+        if (response.getStatusCode() != HttpStatus.OK)
+            throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không thể nhận diện được CCCD!");
         String responseData = response.getBody();
         return responseData.substring(responseData.indexOf("["), responseData.lastIndexOf("]") + 1);
     }

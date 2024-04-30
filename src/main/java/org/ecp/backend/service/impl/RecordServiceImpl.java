@@ -3,6 +3,7 @@ package org.ecp.backend.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.ecp.backend.constant.CommonConstant;
 import org.ecp.backend.dto.RecordDto;
+import org.ecp.backend.dto.request.ValueDto;
 import org.ecp.backend.dto.response.PredictValueDto;
 import org.ecp.backend.dto.response.ServerResponseDto;
 import org.ecp.backend.entity.Bill;
@@ -35,14 +36,14 @@ public class RecordServiceImpl implements RecordService {
     private final BillRepository billRepo;
 
     @Override
-    public ServerResponseDto createRecord(String contractName, RecordDto dto) {
+    public ServerResponseDto createRecord(String contractName, String date, ValueDto dto) {
         Contract contract = contractRepo.findByName(contractName)
                 .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tồn tại hợp đồng!"));
-        Record recordCheck = recordRepo.findByStringTime(DateUtils.convertDateToString(dto.getTime(), "yyyy-MM-dd"));
+        Record recordCheck = recordRepo.findByStringTime(date);
         if (recordCheck != null)
             throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Đã có bản ghi tồn tại!");
         Record record = Record.builder()
-                .time(dto.getTime())
+                .time(DateUtils.convertStringToDate(date, "yyyy-MM-dd"))
                 .consume(dto.getConsume())
                 .normal(dto.getNormal())
                 .low(dto.getLow())
@@ -50,16 +51,17 @@ public class RecordServiceImpl implements RecordService {
                 .contract(contract)
                 .build();
         recordRepo.save(record);
-        return new ServerResponseDto(CommonConstant.SUCCESS, "Tao ban ghi thanh cong");
+        return new ServerResponseDto(CommonConstant.SUCCESS, "Tạo bản ghi thành công!");
     }
 
     @Override
-    public ServerResponseDto predictValueCurrentMonth(String contractName) {
-        Date now = new Date();
-        Date startOfMonth = DateUtils.getStartOfMonth(now);
+    public ServerResponseDto predictValueCurrentMonth(String contractName, String date) {
+        Date dateTime = DateUtils.convertStringToDate(date, "yyyy-MM-dd");
+        Date startOfMonth = DateUtils.getStartOfMonth(dateTime);
+        Date endOfMonth = DateUtils.getEndOfMonth(dateTime);
         Contract contract = contractRepo.findByName(contractName)
                 .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tồn tại hợp đồng!"));
-        List<Record> records = recordRepo.findByContractNameAndTimeRange(contractName, startOfMonth, now);
+        List<Record> records = recordRepo.findByContractNameAndTimeRange(contractName, startOfMonth, endOfMonth);
         int size = records.size();
         if (size == 0) return new ServerResponseDto(CommonConstant.SUCCESS, new PredictValueDto(0, 0, 0, 0, 0));
         PredictValueDto dto = calculatePredictValue(contract, records);
@@ -96,17 +98,19 @@ public class RecordServiceImpl implements RecordService {
     }
 
     @Override
-    public ServerResponseDto findRecordsCurrentMonth(String contractName) {
-        Date now = new Date();
-        Date startOfMonth = DateUtils.getStartOfMonth(now);
-        List<RecordDto> records = recordRepo.findByContractNameOnTimeRange(contractName, startOfMonth, now);
+    public ServerResponseDto findRecordsCurrentMonth(String contractName, String date) {
+        Date dateTime = DateUtils.convertStringToDate(date, "yyyy-MM-dd");
+        Date startOfMonth = DateUtils.getStartOfMonth(dateTime);
+        Date endOfMonth = DateUtils.getEndOfMonth(dateTime);
+        List<RecordDto> records = recordRepo.findByContractNameOnTimeRange(contractName, startOfMonth, endOfMonth);
         return new ServerResponseDto(CommonConstant.SUCCESS, records);
     }
 
     @Override
-    public ServerResponseDto findConsumeTime7DaysBefore(String contractName) {
+    public ServerResponseDto findConsumeTime7DaysBefore(String contractName, String date) {
         List<RecordDto> dtos = new ArrayList<>();
-        Date yesterday = DateUtils.getEndOfDay(DateUtils.add(new Date(), Calendar.DATE, -1));
+        Date dateTime = DateUtils.convertStringToDate(date, "yyyy-MM-dd");
+        Date yesterday = DateUtils.getEndOfDay(DateUtils.add(dateTime, Calendar.DATE, -1));
         Date day7Before = DateUtils.getStartOfDay(DateUtils.add(yesterday, Calendar.DATE, -6));
         String day8Before = DateUtils.convertDateToString(DateUtils.add(yesterday, Calendar.DATE, -7), "yyyy-MM-dd");
         Record record8Before = recordRepo.findByStringTime(day8Before);
@@ -135,9 +139,10 @@ public class RecordServiceImpl implements RecordService {
     }
 
     @Override
-    public ServerResponseDto findConsume6MonthsBefore(String contractName) {
+    public ServerResponseDto findConsume6MonthsBefore(String contractName, String date) {
+        Date dateTime = DateUtils.convertStringToDate(date, "yyyy-MM-dd");
         List<RecordDto> dtos = IntStream.rangeClosed(1, 6)
-                .mapToObj(i -> findTotalPerMonth(contractName, new Date(), -i))
+                .mapToObj(i -> findTotalPerMonth(contractName, dateTime, -i))
                 .collect(Collectors.toList());
         dtos.removeAll(Collections.singleton(null));
         return new ServerResponseDto(CommonConstant.SUCCESS, dtos);
@@ -149,7 +154,7 @@ public class RecordServiceImpl implements RecordService {
         Bill bill = billRepo.findBillsByContractNameAndEndDate(contractName, endOfMonth);
         if (bill == null) return null;
         return RecordDto.builder()
-                .time(before)
+                .time(endOfMonth)
                 .consume(bill.getConsume())
                 .normal(bill.getNormal())
                 .low(bill.getLow())

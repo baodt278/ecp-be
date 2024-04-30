@@ -11,6 +11,10 @@ public class GenerateUtils {
         return RandomStringUtils.random(10, true, true);
     }
 
+    public static String generatePassword() {
+        return RandomStringUtils.random(6, true, true);
+    }
+
     public static String generateAcronym(String acronym) {
         return acronym.replaceAll("[^a-zA-Z0-9]", "").toUpperCase();
     }

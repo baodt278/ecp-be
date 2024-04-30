@@ -10,5 +10,5 @@ public class EmployeeRequest {
     private String username;
     private String password;
     private String email;
-    private Role role;
+    private String role;
 }

@@ -13,7 +13,6 @@ import java.util.Date;
 @AllArgsConstructor
 @Builder
 public class RecordDto {
-    @JsonFormat(pattern = "yyyy-MM-dd")
     private Date time;
     private double consume;
     private double normal;

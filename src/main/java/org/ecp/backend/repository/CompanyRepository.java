@@ -18,7 +18,8 @@ public interface CompanyRepository extends JpaRepository<Company, Long> {
     @Query("SELECT new org.ecp.backend.dto.CompanyDto(c.name, c.acronym, c.address) FROM Company c")
     List<CompanyDto> findCompanies();
 
+
     @Query("SELECT new org.ecp.backend.dto.CompanyDto(c.name, c.acronym, c.address) FROM Company c " +
             "WHERE c.acronym = :acronym")
-    Optional<CompanyDto> findCompanyByAcronym(String acronym);
+    CompanyDto findCompanyByAcronym(String acronym);
 }

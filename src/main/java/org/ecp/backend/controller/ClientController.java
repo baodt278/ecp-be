@@ -22,11 +22,29 @@ public class ClientController {
     private final RecordService recordService;
     private final BillService billService;
     private final CompanyService companyService;
+    private final NewsService newsService;
+
+    @GetMapping("/info")
+    public ServerResponseDto getInfo(@RequestParam String username) {
+        return clientService.getInfo(username);
+    }
+
+
+    @GetMapping("/info-detail")
+    public ServerResponseDto getInfoDetail(@RequestParam String username) {
+        return clientService.getDetailInfo(username);
+    }
 
     @PostMapping("/update-info")
     public ServerResponseDto updateInfo(@RequestParam String username,
                                         @RequestBody UserInfoDto dto) {
         return clientService.updateInfo(username, dto);
+    }
+
+    @PostMapping(value = "/upload-avatar", consumes = {"multipart/form-data"})
+    public ServerResponseDto uploadAvatar(@RequestParam String username,
+                                          @ModelAttribute DumbDto dto) {
+        return clientService.uploadAvatar(username, dto);
     }
 
     @PostMapping("/change-password")
@@ -47,8 +65,8 @@ public class ClientController {
     }
 
     @GetMapping("/request-verify")
-    public ServerResponseDto getRequests() {
-        return requestService.getRequestsForAdmin();
+    public ServerResponseDto getRequestsVerify(String username) {
+        return requestService.getRequestsVerifyForClient(username);
     }
 
     @GetMapping("/requests")
@@ -80,23 +98,23 @@ public class ClientController {
     }
 
     @GetMapping("/records/7days-before")
-    public ServerResponseDto getRecords7DaysBefore(@RequestParam String contractName) {
-        return recordService.findConsumeTime7DaysBefore(contractName);
+    public ServerResponseDto getRecords7DaysBefore(@RequestParam String contractName, @RequestParam String date) {
+        return recordService.findConsumeTime7DaysBefore(contractName, date);
     }
 
     @GetMapping("/records/6months-before")
-    public ServerResponseDto getTotals6MonthsBefore(@RequestParam String contractName) {
-        return recordService.findConsume6MonthsBefore(contractName);
+    public ServerResponseDto getTotals6MonthsBefore(@RequestParam String contractName, @RequestParam String date) {
+        return recordService.findConsume6MonthsBefore(contractName, date);
     }
 
     @GetMapping("/records/current-month")
-    public ServerResponseDto getRecordsCurrentMonth(@RequestParam String contractName) {
-        return recordService.findRecordsCurrentMonth(contractName);
+    public ServerResponseDto getRecordsCurrentMonth(@RequestParam String contractName, @RequestParam String date) {
+        return recordService.findRecordsCurrentMonth(contractName, date);
     }
 
     @GetMapping("/records/predict-current")
-    public ServerResponseDto getPredictCurrentMonth(@RequestParam String contractName) {
-        return recordService.predictValueCurrentMonth(contractName);
+    public ServerResponseDto getPredictCurrentMonth(@RequestParam String contractName, @RequestParam String date) {
+        return recordService.predictValueCurrentMonth(contractName, date);
     }
 
     @GetMapping("/bills")
@@ -105,7 +123,17 @@ public class ClientController {
     }
 
     @GetMapping("/bills/current-month")
-    public ServerResponseDto getBillCurrentMonth(@RequestParam String username) {
-        return billService.getBillCurrentMonth(username);
+    public ServerResponseDto getBillCurrentMonth(@RequestParam String username, @RequestParam String date) {
+        return billService.getBillCurrentMonth(username, date);
+    }
+
+    @GetMapping("/news/system")
+    public ServerResponseDto getSystemNews() {
+        return newsService.getSystemNews();
+    }
+
+    @GetMapping("/news/local")
+    public ServerResponseDto getLocalNewsForClient(@RequestParam String username) {
+        return newsService.getLocalNewsForUser(username);
     }
 }

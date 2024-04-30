@@ -2,7 +2,6 @@ package org.ecp.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.ecp.backend.enums.ChargeType;
 
 import java.util.Date;
 
@@ -19,8 +18,6 @@ public class Charge {
     private String contractName;
     private String requestCode;
     private Date createdAt;
-    @Enumerated(EnumType.STRING)
-    private ChargeType type;
     @Column(columnDefinition = "text")
     private String reason;
     private double value;

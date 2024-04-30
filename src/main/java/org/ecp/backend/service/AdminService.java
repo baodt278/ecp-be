@@ -1,5 +1,6 @@
 package org.ecp.backend.service;
 
+import org.ecp.backend.dto.request.DumbDto;
 import org.ecp.backend.dto.request.PasswordRequest;
 import org.ecp.backend.dto.request.LoginRequest;
 import org.ecp.backend.dto.request.RegisterRequest;
@@ -16,4 +17,8 @@ public interface AdminService {
     ServerResponseDto getInfo(String username);
 
     ServerResponseDto updateInfo(String username, UserInfoDto dto);
+
+    ServerResponseDto uploadAvatar(String username, DumbDto dto);
+
+    ServerResponseDto getEmployees(String acronym);
 }

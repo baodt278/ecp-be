@@ -3,10 +3,7 @@ package org.ecp.backend.controller;
 import lombok.RequiredArgsConstructor;
 import org.ecp.backend.dto.RecordDto;
 import org.ecp.backend.dto.UserInfoDto;
-import org.ecp.backend.dto.request.AcceptRequest;
-import org.ecp.backend.dto.request.ActionDto;
-import org.ecp.backend.dto.request.EmployeeRequest;
-import org.ecp.backend.dto.request.PasswordRequest;
+import org.ecp.backend.dto.request.*;
 import org.ecp.backend.dto.response.ServerResponseDto;
 import org.ecp.backend.service.*;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,28 +13,40 @@ import java.util.Date;
 
 @RestController
 @RequiredArgsConstructor
-@CrossOrigin(origins = { "*" })
+@CrossOrigin(origins = {"*"})
 @RequestMapping("/api/employee")
 public class EmployeeController {
     private final EmployeeService employeeService;
-    private final CompanyService companyService;
     private final RequestService requestService;
     private final RecordService recordService;
     private final BillService billService;
+    private final NewsService newsService;
+    private final ContractService contractService;
 
-    @GetMapping("/all")
+    @GetMapping("/company")
+    public ServerResponseDto getCompany(@RequestParam String acronym) {
+        return employeeService.getCompany(acronym);
+    }
+
+    @GetMapping("/employees")
     public ServerResponseDto getAllEmployees(@RequestParam String acronym) {
         return employeeService.getEmployees(acronym);
     }
 
-    @GetMapping("")
+    @GetMapping("/contracts")
+    public ServerResponseDto getContracts(@RequestParam String acronym) {
+        return employeeService.getContracts(acronym);
+    }
+
+    @GetMapping("/info")
     public ServerResponseDto getInfo(@RequestParam String username) {
         return employeeService.getInfo(username);
     }
 
-    @GetMapping("/company")
-    public ServerResponseDto getCompany(@RequestParam String acronym) {
-        return companyService.getCompany(acronym);
+    @PostMapping(value = "/upload-avatar", consumes = {"multipart/form-data"})
+    public ServerResponseDto uploadAvatar(@RequestParam String username,
+                                          @ModelAttribute DumbDto dto) {
+        return employeeService.uploadAvatar(username, dto);
     }
 
     @PostMapping("/create-employee")
@@ -64,7 +73,7 @@ public class EmployeeController {
         return requestService.getRequestsForStaff(acronym);
     }
 
-    @PostMapping("/staff/review-requests")
+    @PostMapping("/staff/review-request")
     public ServerResponseDto reviewRequest(@RequestParam String username,
                                            @RequestBody ActionDto dto) {
         return requestService.reviewRequest(username, dto);
@@ -75,19 +84,13 @@ public class EmployeeController {
         return requestService.getRequestsForManager(acronym);
     }
 
-    @GetMapping("/manager/bills")
-    public ServerResponseDto getBillsCompany(@RequestParam String acronym,
-                                             @RequestParam Date date) {
-        return billService.getBillsCompany(acronym, date);
-    }
-
-    @GetMapping("/manager/bills-total")
+    @GetMapping("/manager/analyst")
     public ServerResponseDto totalAnalyst(@RequestParam String acronym,
-                                          @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date date) {
+                                          @RequestParam String date) {
         return billService.totalAnalyst(acronym, date);
     }
 
-    @PostMapping("/manager/accept-requests")
+    @PostMapping("/manager/accept-request")
     public ServerResponseDto acceptRequest(@RequestParam String username,
                                            @RequestBody AcceptRequest dto) {
         return requestService.acceptRequest(username, dto);
@@ -95,17 +98,60 @@ public class EmployeeController {
 
     @PostMapping("/staff/bill-create")
     public ServerResponseDto manualCreateBill(@RequestParam String contractName,
-                                              @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date date) {
+                                              @RequestParam String date) {
         return billService.manualCreate(contractName, date);
     }
 
     @PostMapping("/staff/bill-pay")
-    public ServerResponseDto payBill(@RequestParam String code) {
-        return billService.payBill(code);
+    public ServerResponseDto payBill(@RequestParam String contractName, @RequestParam String date) {
+        return billService.payBill(contractName, date);
     }
 
-    @PostMapping("/staff/record-create")
-    public ServerResponseDto createRecord(@RequestParam String contractName, @RequestBody RecordDto dto) {
-        return recordService.createRecord(contractName, dto);
+    @PostMapping("/staff/create-record")
+    public ServerResponseDto createRecord(@RequestParam String contractName,
+                                          @RequestParam String date,
+                                          @RequestBody ValueDto dto) {
+        return recordService.createRecord(contractName, date, dto);
+    }
+
+    @GetMapping("/staff/get-contract")
+    public ServerResponseDto createRecord(@RequestParam String contractName) {
+        return contractService.getContractInfo(contractName);
+    }
+
+    @PostMapping("/delete-employee")
+    public ServerResponseDto deleteEmployee(@RequestParam String username) {
+        return employeeService.deleteEmployee(username);
+    }
+
+    @GetMapping("/get-bill")
+    public ServerResponseDto getBillByCode(@RequestParam String username, @RequestParam String acronym) {
+        return billService.getBillByCode(username, acronym);
+    }
+
+    @GetMapping("/request")
+    public ServerResponseDto getRequest(@RequestParam String acronym) {
+        return requestService.getRequestForCompany(acronym);
+    }
+
+    @GetMapping("/news/global")
+    public ServerResponseDto getGlobalNews() {
+        return newsService.getSystemNews();
+    }
+
+    @GetMapping("/news/local")
+    public ServerResponseDto getLocalNews(@RequestParam String acronym) {
+        return newsService.getLocalNewsForEmployee(acronym);
+    }
+
+    @PostMapping(value = "/news/create-local", consumes = {"multipart/form-data"})
+    public ServerResponseDto createLocalNews(@RequestParam String acronym,
+                                             @ModelAttribute NewsRequest dto) {
+        return newsService.createLocalNews(acronym, dto);
+    }
+
+    @PostMapping("/news/delete")
+    public ServerResponseDto deleteNews(@RequestParam String code) {
+        return newsService.deleteNews(code);
     }
 }

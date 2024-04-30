@@ -10,4 +10,5 @@ public class EmployeeResponse {
     private String username;
     private String acronymCompany;
     private Role role;
+    private String avatar;
 }

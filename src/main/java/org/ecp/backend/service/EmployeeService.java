@@ -1,5 +1,6 @@
 package org.ecp.backend.service;
 
+import org.ecp.backend.dto.request.DumbDto;
 import org.ecp.backend.dto.request.PasswordRequest;
 import org.ecp.backend.dto.request.LoginRequest;
 import org.ecp.backend.dto.request.EmployeeRequest;
@@ -17,5 +18,13 @@ public interface EmployeeService {
 
     ServerResponseDto getEmployees(String acronym);
 
+    ServerResponseDto getContracts(String acronym);
+
     ServerResponseDto getInfo(String username);
+
+    ServerResponseDto uploadAvatar(String username, DumbDto dto);
+
+    ServerResponseDto getCompany(String acronym);
+
+    ServerResponseDto deleteEmployee(String username);
 }

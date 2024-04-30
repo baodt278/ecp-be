@@ -9,4 +9,5 @@ public class ClientResponse {
     private String username;
     private Role role;
     private Boolean active;
+    private String avatar;
 }

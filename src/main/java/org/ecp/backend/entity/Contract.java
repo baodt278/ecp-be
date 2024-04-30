@@ -22,7 +22,7 @@ public class Contract {
     private String address;
     private int houses;
     private Date createdAt;
-
+    private Date updatedAt;
     @Enumerated(EnumType.STRING)
     private ContractType type;
     @Enumerated(EnumType.STRING)

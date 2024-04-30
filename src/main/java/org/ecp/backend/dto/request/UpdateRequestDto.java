@@ -11,6 +11,5 @@ import org.springframework.web.multipart.MultipartFile;
 public class UpdateRequestDto {
     private String code;
     private String description;
-    private String info;
     private MultipartFile[] images;
 }

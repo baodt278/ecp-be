@@ -6,4 +6,6 @@ public interface ContractService {
     ServerResponseDto getContractClientOwner(String username);
 
     ServerResponseDto getContractCompanySign(String acronym);
+
+    ServerResponseDto getContractInfo(String contractName);
 }
