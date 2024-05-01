@@ -61,6 +61,10 @@ public class BillServiceImpl implements BillService {
         try {
             Date dateTime = DateUtils.convertStringToDate(date, "yyyy-MM-dd");
             Bill bill = billRepo.findByEnd(contractName, dateTime).orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Hóa đơn này không tồn tại!"));
+            if (bill.getStatus() == BillStatus.PAID)
+                throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Hóa đơn này đã được thanh toán!");
+            if (bill.getExpire().before(new Date()))
+                throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Hóa đơn này đã quá hạn!");
             bill.setStatus(BillStatus.PAID);
             billRepo.save(bill);
             mailService.sendMail("doantuanbao2708@gmail.com", "Hệ thống điện", bill.getContract().getClient().getEmail(), "Thanh toán hóa đơn", "Hóa đơn" + bill.getCode() + " của bạn đã được thanh toán!");
