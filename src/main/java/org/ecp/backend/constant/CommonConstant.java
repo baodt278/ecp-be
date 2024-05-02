@@ -7,4 +7,7 @@ public class CommonConstant {
     public static final String DESCRIPTION_VERIFY = "Yêu cầu xác minh tài khoản";
     public static final String TAX_PERCENT = "tax_percent";
     public static final String EXPIRED_AFTER_DAYS = "expire_after_days";
+    public static final String OWNER = "owner";
+    public static final String BANK_ACCOUNT = "bank_account";
+    public static final String DESCRIPTION_PAYMENT = "Yêu cầu thanh toán hóa đơn ";
 }

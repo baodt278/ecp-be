@@ -63,8 +63,6 @@ public class BillServiceImpl implements BillService {
             Bill bill = billRepo.findByEnd(contractName, dateTime).orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Hóa đơn này không tồn tại!"));
             if (bill.getStatus() == BillStatus.PAID)
                 throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Hóa đơn này đã được thanh toán!");
-            if (bill.getExpire().before(new Date()))
-                throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Hóa đơn này đã quá hạn!");
             bill.setStatus(BillStatus.PAID);
             billRepo.save(bill);
             mailService.sendMail("doantuanbao2708@gmail.com", "Hệ thống điện", bill.getContract().getClient().getEmail(), "Thanh toán hóa đơn", "Hóa đơn" + bill.getCode() + " của bạn đã được thanh toán!");
@@ -73,6 +71,7 @@ public class BillServiceImpl implements BillService {
         }
         return new ServerResponseDto(CommonConstant.SUCCESS, "Đã thanh toán thành công!");
     }
+
 
     @Override
     public ServerResponseDto getBillsCompany(String acronym, Date date) {
@@ -144,10 +143,9 @@ public class BillServiceImpl implements BillService {
         Date dateTime = DateUtils.convertStringToDate(date, "yyyy-MM-dd");
         Date endOfMonth = DateUtils.getEndOfMonth(dateTime);
         Date endOf6Month = DateUtils.add(endOfMonth, Calendar.MONTH, -5);
-        Date endOfNextMonth = DateUtils.add(endOfMonth, Calendar.MONTH, 1);
         List<TotalDto> values = new ArrayList<>();
         List<BillDto> dtos = billRepo.findByCompanyNotPaid(acronym, BillStatus.PAID, endOfMonth);
-        while (endOf6Month.before(endOfNextMonth)) {
+        while (endOf6Month.before(endOfMonth)) {
             double total = Optional.ofNullable(billRepo.countByCompanyAndStatusAndEndDate(acronym, null, endOf6Month)).orElse(0.0);
             values.add(new TotalDto(endOf6Month, total));
             endOf6Month = DateUtils.add(endOf6Month, Calendar.MONTH, 1);

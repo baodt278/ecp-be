@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ecp.backend.constant.CommonConstant;
+import org.ecp.backend.dto.PaymentDto;
 import org.ecp.backend.dto.request.*;
 import org.ecp.backend.dto.response.RequestResponse;
 import org.ecp.backend.dto.response.ServerResponseDto;
@@ -43,6 +44,7 @@ public class RequestServiceImpl implements RequestService {
     private final ChargeRepository chargeRepo;
     private final MinioService minioService;
     private final MailService mailService;
+    private final BillRepository billRepo;
     @Value("${id_extract_url}")
     private String url;
 
@@ -127,7 +129,9 @@ public class RequestServiceImpl implements RequestService {
         request.setStatus(RequestStatus.valueOf(dto.getStatus()));
         requestRepo.save(request);
         updateInfoClient(request);
-        mailService.sendMail("doantuanbao2708@gmail.com", "Hệ thống điện", request.getClient().getEmail(), "Xác minh tài khoản", request.getStatus() == RequestStatus.APPROVED ? "Tài khoản của bạn đã được xác minh!\nBạn có thể sử dụng dịch vụ của chúng tôi!" : "Tài khoản của bạn chưa được xác minh!\nVui long kiểm tra lại thông tin!");
+        mailService.sendMail("doantuanbao2708@gmail.com", "Hệ thống điện", request.getClient().getEmail(), "Xác minh tài khoản", request.getStatus() == RequestStatus.APPROVED ? """
+                Tài khoản của bạn đã được xác minh!
+                Đăng nhập tài khoản tại đây http://localhost:3000/client-login""" : "Tài khoản của bạn chưa được xác minh!\nVui long kiểm tra lại thông tin!");
         return new ServerResponseDto(CommonConstant.SUCCESS, "Đã xác minh yêu cầu!");
     }
 
@@ -204,6 +208,14 @@ public class RequestServiceImpl implements RequestService {
         request.setReviewedAt(new Date());
         request.setReviewText(dto.getText());
         request.setStatus(RequestStatus.valueOf(dto.getStatus()));
+        if (request.getType() == RequestType.PAYMENT) {
+            Bill bill = billRepo.findByCode(request.getInfo())
+                    .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy hóa đơn!"));
+            bill.setStatus(request.getStatus() == RequestStatus.REVIEWED ? BillStatus.PAID :
+              (bill.getEnd().before(new Date()) ? BillStatus.EXPIRED : BillStatus.UNPAID));
+            billRepo.save(bill);
+            request.setStatus(RequestStatus.APPROVED);
+        }
         requestRepo.save(request);
         return new ServerResponseDto(CommonConstant.SUCCESS, "Đã xác minh yêu cầu");
     }
@@ -229,10 +241,15 @@ public class RequestServiceImpl implements RequestService {
         if (request.getStatus() != RequestStatus.APPROVED) return;
         String[] data = convertJsonToArray(request.getInfo());
         Client client = request.getClient();
-        client.setActive(true);
+        if (clientRepo.existsByPersonId(data[0])) {
+            request.setStatus(RequestStatus.REJECTED);
+            requestRepo.save(request);
+            throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "CCCD đã được sử dụng!");
+        }
         client.setPersonId(data[0]); // ID
         client.setPersonName(data[1]); // Full name
         client.setDateOfBirth(DateUtils.convertStringToDate(data[2], "dd/MM/yyyy")); // Date of birth
+        client.setActive(true);
         clientRepo.save(client);
     }
 
@@ -357,5 +374,32 @@ public class RequestServiceImpl implements RequestService {
 
     private String[] convertJsonToArray(String json) {
         return json.replaceAll("[\\[\\]\"']", "").split(",");
+    }
+
+    @Override
+    public ServerResponseDto paymentRequest(String username, PaymentDto dto) {
+        if (!clientRepo.existsByUsername(username))
+            throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy tài khoản!");
+        Bill bill = billRepo.findByCode(dto.getBillCode())
+                .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tìm thấy hóa đơn!"));
+        if (bill.getStatus() == BillStatus.PAID)
+            throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Hóa đơn này đã được thanh toán!");
+        if (bill.getEnd().before(new Date()))
+            throw new ApplicationRuntimeException(CommonConstant.BAD_REQUEST, "Hóa đơn này đã quá hạn!");
+        Request request = Request.builder()
+                .code(GenerateUtils.generatedCode())
+                .description(CommonConstant.DESCRIPTION_PAYMENT + bill.getCode())
+                .createdAt(new Date())
+                .images(dto.getImages() == null ? null : Arrays.stream(dto.getImages()).map(minioService::uploadFile).toList())
+                .type(RequestType.PAYMENT)
+                .status(RequestStatus.PENDING)
+                .info(bill.getCode())
+                .company(bill.getContract().getCompany())
+                .client(bill.getContract().getClient())
+                .build();
+        requestRepo.save(request);
+        bill.setStatus(BillStatus.PENDING);
+        billRepo.save(bill);
+        return new ServerResponseDto(CommonConstant.SUCCESS, "Đã gửi yêu cầu thanh toán!");
     }
 }

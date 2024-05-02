@@ -1,5 +1,6 @@
 package org.ecp.backend.service;
 
+import org.ecp.backend.dto.PaymentDto;
 import org.ecp.backend.dto.request.*;
 import org.ecp.backend.dto.response.ServerResponseDto;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,4 +32,6 @@ public interface RequestService {
     ServerResponseDto reviewRequest(String username, ActionDto dto);
 
     ServerResponseDto acceptRequest(String username, AcceptRequest dto);
+
+    ServerResponseDto paymentRequest(String username, PaymentDto dto);
 }

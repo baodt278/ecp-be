@@ -10,4 +10,6 @@ public interface BaseService {
     ServerResponseDto update(BaseDto dto);
 
     ServerResponseDto delete(String object);
+
+    ServerResponseDto getMessage();
 }

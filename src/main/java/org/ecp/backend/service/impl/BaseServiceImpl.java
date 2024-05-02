@@ -45,4 +45,11 @@ public class BaseServiceImpl implements BaseService {
         baseRepos.delete(base);
         return new ServerResponseDto(CommonConstant.SUCCESS, "Xóa cấu hình thành công!");
     }
+    @Override
+    public ServerResponseDto getMessage() {
+        Base base = baseRepos.findByObject(CommonConstant.BANK_ACCOUNT).orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Cấu hình không tồn tại!"));
+        Base base1 = baseRepos.findByObject(CommonConstant.OWNER).orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Cấu hình không tồn tại!"));
+        String message = "Thanh toán hóa đơn chuyển khoản đến tài khoản: " + base.getValue() + ". Chủ tài khoản: " + base1.getValue() + ".\nKhách hàng vui lòng chụp lại biên lai chuyển khoản và gửi cho chúng tôi để xác nhận thanh toán!";
+        return new ServerResponseDto(CommonConstant.SUCCESS, message);
+    }
 }

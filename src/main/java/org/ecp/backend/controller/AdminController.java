@@ -82,10 +82,12 @@ public class AdminController {
                                           @ModelAttribute DumbDto dto) {
         return adminService.uploadAvatar(username, dto);
     }
+
     @PostMapping("/update-company")
     public ServerResponseDto updateCompany(@RequestBody CompanyDto dto) {
         return companyService.update(dto);
     }
+
     @PostMapping("/delete-company")
     public ServerResponseDto deleteCompany(@RequestParam String acronym) {
         return companyService.delete(acronym);

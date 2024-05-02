@@ -8,4 +8,6 @@ public interface ContractService {
     ServerResponseDto getContractCompanySign(String acronym);
 
     ServerResponseDto getContractInfo(String contractName);
+
+    ServerResponseDto getCharge(String username);
 }

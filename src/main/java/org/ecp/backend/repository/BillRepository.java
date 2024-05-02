@@ -54,5 +54,7 @@ public interface BillRepository extends JpaRepository<Bill, Long> {
             "AND b.contract.company.acronym = :acronym")
     List<BillDto> findByUsernameAndCompany(String username, String acronym);
 
+    Optional<Bill> findByCode(String code);
+
     boolean existsByEnd(Date date);
 }

@@ -1,6 +1,7 @@
 package org.ecp.backend.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.ecp.backend.dto.PaymentDto;
 import org.ecp.backend.dto.UserInfoDto;
 import org.ecp.backend.dto.request.DumbDto;
 import org.ecp.backend.dto.request.PasswordRequest;
@@ -23,6 +24,7 @@ public class ClientController {
     private final BillService billService;
     private final CompanyService companyService;
     private final NewsService newsService;
+    private final BaseService baseService;
 
     @GetMapping("/info")
     public ServerResponseDto getInfo(@RequestParam String username) {
@@ -136,4 +138,20 @@ public class ClientController {
     public ServerResponseDto getLocalNewsForClient(@RequestParam String username) {
         return newsService.getLocalNewsForUser(username);
     }
+
+    @PostMapping(value = "/payment", consumes = {"multipart/form-data"})
+    public ServerResponseDto paymentRequest(@RequestParam String username, @ModelAttribute PaymentDto dto) {
+        return requestService.paymentRequest(username, dto);
+    }
+
+    @GetMapping("/charge")
+    public ServerResponseDto getCharge(@RequestParam String username) {
+        return contractService.getCharge(username);
+    }
+
+    @GetMapping("/message")
+    public ServerResponseDto getMessage() {
+        return baseService.getMessage();
+    }
+
 }
