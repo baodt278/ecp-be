@@ -21,6 +21,7 @@ import org.ecp.backend.utils.CalculatorUtils;
 import org.ecp.backend.utils.DateUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.Month;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -37,13 +38,14 @@ public class RecordServiceImpl implements RecordService {
 
     @Override
     public ServerResponseDto createRecord(String contractName, String date, ValueDto dto) {
+        Date dateTime = DateUtils.convertStringToDate(date, "yyyy-MM-dd");
         Contract contract = contractRepo.findByName(contractName)
                 .orElseThrow(() -> new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Không tồn tại hợp đồng!"));
-        Record recordCheck = recordRepo.findByStringTime(date);
+        Record recordCheck = recordRepo.findByDateAndContract(dateTime, contractName);
         if (recordCheck != null)
             throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "Đã có bản ghi tồn tại!");
         Record record = Record.builder()
-                .time(DateUtils.convertStringToDate(date, "yyyy-MM-dd"))
+                .time(dateTime)
                 .consume(dto.getConsume())
                 .normal(dto.getNormal())
                 .low(dto.getLow())
@@ -110,10 +112,11 @@ public class RecordServiceImpl implements RecordService {
     public ServerResponseDto findConsumeTime7DaysBefore(String contractName, String date) {
         List<RecordDto> dtos = new ArrayList<>();
         Date dateTime = DateUtils.convertStringToDate(date, "yyyy-MM-dd");
+        if (compareMonthAndYear(dateTime, new Date())) dateTime = new Date();
         Date yesterday = DateUtils.getEndOfDay(DateUtils.add(dateTime, Calendar.DATE, -1));
         Date day7Before = DateUtils.getStartOfDay(DateUtils.add(yesterday, Calendar.DATE, -6));
-        String day8Before = DateUtils.convertDateToString(DateUtils.add(yesterday, Calendar.DATE, -7), "yyyy-MM-dd");
-        Record record8Before = recordRepo.findByStringTime(day8Before);
+        Date day8Before = DateUtils.getStartOfDay(DateUtils.add(yesterday, Calendar.DATE, -7));
+        Record record8Before = recordRepo.findByDateAndContract(day8Before, contractName);
         List<Record> records = recordRepo.findByContractNameAndTimeRange(contractName, day7Before, yesterday);
 
         for (int i = 0; i < records.size(); i++) {
@@ -141,8 +144,12 @@ public class RecordServiceImpl implements RecordService {
     @Override
     public ServerResponseDto findConsume6MonthsBefore(String contractName, String date) {
         Date dateTime = DateUtils.convertStringToDate(date, "yyyy-MM-dd");
+        if (compareMonthAndYear(dateTime, new Date())) {
+            dateTime = new Date();
+        }
+        Date finalDateTime = dateTime;
         List<RecordDto> dtos = IntStream.rangeClosed(1, 6)
-                .mapToObj(i -> findTotalPerMonth(contractName, dateTime, -i))
+                .mapToObj(i -> findTotalPerMonth(contractName, finalDateTime, -i))
                 .collect(Collectors.toList());
         dtos.removeAll(Collections.singleton(null));
         return new ServerResponseDto(CommonConstant.SUCCESS, dtos);
@@ -160,5 +167,14 @@ public class RecordServiceImpl implements RecordService {
                 .low(bill.getLow())
                 .high(bill.getHigh())
                 .build();
+    }
+
+    private static boolean compareMonthAndYear(Date date1, Date date2) {
+        Calendar cal1 = Calendar.getInstance();
+        Calendar cal2 = Calendar.getInstance();
+        cal1.setTime(date1);
+        cal2.setTime(date2);
+
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) && cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH);
     }
 }

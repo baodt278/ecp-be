@@ -15,6 +15,7 @@ import org.ecp.backend.repository.*;
 import org.ecp.backend.utils.CalculatorUtils;
 import org.ecp.backend.utils.DateUtils;
 import org.ecp.backend.utils.GenerateUtils;
+import org.ecp.backend.utils.TextUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -50,7 +51,7 @@ public class SchedulerService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         billRepo.saveAll(bills);
-        return new ServerResponseDto(CommonConstant.SUCCESS, "Tao hoa don hang thang thanh cong");
+        return new ServerResponseDto(CommonConstant.SUCCESS, "Tạo hóa đơn hàng tháng thành công!");
     }
 
     //    @Scheduled(cron = "0 0 6 15 * ?")
@@ -58,14 +59,14 @@ public class SchedulerService {
         List<Bill> bills = billRepo.findBillsByStatusAndExpireDate(BillStatus.UNPAID, new Date());
         bills.forEach(bill -> bill.setStatus(BillStatus.EXPIRED));
         billRepo.saveAll(bills);
-        return new ServerResponseDto(CommonConstant.SUCCESS, "Thay doi hoa don hang thang thanh cong");
+        return new ServerResponseDto(CommonConstant.SUCCESS, "Thay đổi trạng thái hóa đơn hết hạn thành công!");
     }
 
-    //    @Scheduled(cron = "0 0 1 * * ?")
+    //    @Scheduled(cron = "0 0 0 * * ?")
     public ServerResponseDto insertRecords() {
-        List<String> names = getTxtFileNames(filePath);
+        List<String> names = TextUtils.getTxtFileNames(filePath);
         recordRepo.saveAll(names.stream().map(this::insertRecord).collect(Collectors.toList()));
-        return new ServerResponseDto(CommonConstant.SUCCESS, "Them ban ghi hang ngay thanh cong");
+        return new ServerResponseDto(CommonConstant.SUCCESS, "Thêm bản ghi thành công!");
     }
 
     private Bill createBillLastMonth(Contract contract) {
@@ -141,23 +142,5 @@ public class SchedulerService {
             e.printStackTrace();
         }
         return firstLine;
-    }
-
-    public static List<String> getTxtFileNames(String directoryPath) {
-        List<String> txtFiles = new ArrayList<>();
-        File directory = new File(directoryPath);
-        if (directory.exists() && directory.isDirectory()) {
-            File[] files = directory.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isFile() && file.getName().toLowerCase().endsWith(".txt")) {
-                        txtFiles.add(file.getName());
-                    }
-                }
-            }
-        } else {
-            System.out.println("Directory does not exist or is not a directory.");
-        }
-        return txtFiles;
     }
 }

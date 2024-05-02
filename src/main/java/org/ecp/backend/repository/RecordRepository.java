@@ -13,15 +13,15 @@ import java.util.List;
 public interface RecordRepository extends JpaRepository<Record, Long> {
     @Query("SELECT r FROM Record r " +
             "WHERE r.contract.name = :contractName " +
-            "AND (r.time BETWEEN :from AND :to) " +
+            "AND (DATE(r.time) BETWEEN DATE(:from) AND DATE(:to)) " +
             "ORDER BY r.time ASC")
     List<Record> findByContractNameAndTimeRange(String contractName, Date from, Date to);
 
     @Query("SELECT new org.ecp.backend.dto.RecordDto(r.time, r.consume, r.normal, r.low, r.high) FROM Record r " +
             "WHERE r.contract.name = :contractName " +
-            "AND (r.time BETWEEN :from AND :to) " +
+            "AND (DATE(r.time) BETWEEN DATE(:from) AND DATE(:to)) " +
             "ORDER BY r.time DESC")
     List<RecordDto> findByContractNameOnTimeRange(String contractName, Date from, Date to);
-    @Query("SELECT r FROM Record r WHERE r.time = DATE(:time)")
-    Record findByStringTime(String time);
+    @Query("SELECT r FROM Record r WHERE DATE(r.time) = DATE(:date) AND r.contract.name = :contractName")
+    Record findByDateAndContract(Date date, String contractName);
 }

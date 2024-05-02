@@ -17,6 +17,7 @@ import org.ecp.backend.service.MinioService;
 import org.ecp.backend.service.RequestService;
 import org.ecp.backend.utils.DateUtils;
 import org.ecp.backend.utils.GenerateUtils;
+import org.ecp.backend.utils.TextUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
@@ -47,6 +48,8 @@ public class RequestServiceImpl implements RequestService {
     private final BillRepository billRepo;
     @Value("${id_extract_url}")
     private String url;
+    @Value("${file_path}")
+    private String filePath;
 
     @Override
     public ServerResponseDto getRequestsForAdmin() {
@@ -283,6 +286,7 @@ public class RequestServiceImpl implements RequestService {
                         .build();
                 contractRepo.save(contract);
                 contractName = contract.getName();
+                TextUtils.createTextFile(filePath, contractName);
             }
             case CONTRACT_CHANGE -> {
                 Contract contract = contractRepo.findByName(data[0])
