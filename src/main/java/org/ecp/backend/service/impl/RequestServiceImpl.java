@@ -59,6 +59,15 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
+    public ServerResponseDto getRequestsForAdmin1() {
+        List<Request> requests = requestRepo.findRequestsBy(RequestType.CLIENT_VERIFY, RequestStatus.APPROVED);
+        List<Request> requests2 = requestRepo.findRequestsBy(RequestType.CLIENT_VERIFY, RequestStatus.REJECTED);
+        requests.addAll(requests2);
+        List<RequestResponse> responses = requests.stream().map(this::getRequestResponse).toList();
+        return new ServerResponseDto(CommonConstant.SUCCESS, responses);
+    }
+
+    @Override
     public ServerResponseDto getRequestForCompany(String acronym) {
         List<Request> requests = requestRepo.findRequestsByCompanyAcronym(acronym);
         List<RequestResponse> responses = requests.stream().map(this::getRequestResponse).toList();
@@ -91,6 +100,13 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public ServerResponseDto getRequestsForClient(String username) {
         List<Request> requests = requestRepo.findRequestsForClient(username);
+        List<RequestResponse> responses = requests.stream().map(this::getRequestResponse).toList();
+        return new ServerResponseDto(CommonConstant.SUCCESS, responses);
+    }
+
+    @Override
+    public ServerResponseDto getRequestsForClient1(String username) {
+        List<Request> requests = requestRepo.findRequestsForClient1(username);
         List<RequestResponse> responses = requests.stream().map(this::getRequestResponse).toList();
         return new ServerResponseDto(CommonConstant.SUCCESS, responses);
     }
@@ -244,11 +260,11 @@ public class RequestServiceImpl implements RequestService {
         if (request.getStatus() != RequestStatus.APPROVED) return;
         String[] data = convertJsonToArray(request.getInfo());
         Client client = request.getClient();
-        if (clientRepo.existsByPersonId(data[0])) {
-            request.setStatus(RequestStatus.REJECTED);
-            requestRepo.save(request);
-            throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "CCCD đã được sử dụng!");
-        }
+//        if (clientRepo.existsByPersonId(data[0])) {
+//            request.setStatus(RequestStatus.REJECTED);
+//            requestRepo.save(request);
+//            throw new ApplicationRuntimeException(CommonConstant.INTERNAL_SERVER_ERROR, "CCCD đã được sử dụng!");
+//        }
         client.setPersonId(data[0]); // ID
         client.setPersonName(data[1]); // Full name
         client.setDateOfBirth(DateUtils.convertStringToDate(data[2], "dd/MM/yyyy")); // Date of birth

@@ -17,7 +17,11 @@ public interface RequestService {
 
     ServerResponseDto getRequestsForAdmin();
 
+    ServerResponseDto getRequestsForAdmin1();
+
     ServerResponseDto getRequestForCompany(String acronym);
+
+    ServerResponseDto getRequestsForClient1(String username);
 
     ServerResponseDto requestVerify(String username, DumbDto dto);
 

@@ -71,6 +71,11 @@ public class AdminController {
         return requestService.getRequestsForAdmin();
     }
 
+    @GetMapping("/request")
+    public ServerResponseDto getRequests2() {
+        return requestService.getRequestsForAdmin1();
+    }
+
     @PostMapping("/verify-client")
     public ServerResponseDto verifyClient(@RequestParam String username,
                                           @RequestBody ActionDto dto) {

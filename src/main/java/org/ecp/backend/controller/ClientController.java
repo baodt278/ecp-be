@@ -76,6 +76,11 @@ public class ClientController {
         return requestService.getRequestsForClient(username);
     }
 
+    @GetMapping("/request")
+    public ServerResponseDto getRequests1(@RequestParam String username) {
+        return requestService.getRequestsForClient1(username);
+    }
+
     @PostMapping(value = "/create-request", consumes = {"multipart/form-data"})
     public ServerResponseDto createRequest(@RequestParam String username,
                                            @ModelAttribute RequestDto dto) {
